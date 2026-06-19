@@ -37,8 +37,10 @@ function formatTime(epoch: number) {
 
 export default async function DashboardPage() {
   const childProfileId = await getChildProfileId();
-  const sessions = getSessions(childProfileId);
-  const stats = getStats(childProfileId);
+  const [sessions, stats] = await Promise.all([
+    getSessions(childProfileId),
+    getStats(childProfileId),
+  ]);
 
   return (
     <div className="min-h-screen bg-cream">

@@ -1,8 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import db from "@/lib/db/index";
-
-const ALLOWED_FIELDS = ["archetype", "mentor_id"] as const;
-type AllowedField = (typeof ALLOWED_FIELDS)[number];
+import { sql } from "@/lib/db/index";
 
 export async function PATCH(req: NextRequest) {
   const childId = req.cookies.get("lc_child_id")?.value;
@@ -12,14 +9,13 @@ export async function PATCH(req: NextRequest) {
 
   const { field, value } = await req.json() as { field: string; value: string };
 
-  if (!ALLOWED_FIELDS.includes(field as AllowedField)) {
+  if (field === "archetype") {
+    await sql`UPDATE child_profiles SET archetype = ${value} WHERE id = ${childId}`;
+  } else if (field === "mentor_id") {
+    await sql`UPDATE child_profiles SET mentor_id = ${value} WHERE id = ${childId}`;
+  } else {
     return NextResponse.json({ error: "Invalid field" }, { status: 400 });
   }
-  if (typeof value !== "string" || !value.trim()) {
-    return NextResponse.json({ error: "Invalid value" }, { status: 400 });
-  }
-
-  db.prepare(`UPDATE child_profiles SET ${field} = ? WHERE id = ?`).run(value.trim(), childId);
 
   return NextResponse.json({ success: true });
 }

@@ -13,7 +13,7 @@ const ALL_PILLARS: { id: string; label: string; icon: string; color: string }[] 
 
 export default async function StudentPage() {
   const childProfileId = await getChildProfileId();
-  const progress = getProgress(childProfileId);
+  const progress = await getProgress(childProfileId);
   const { rank } = progress;
 
   const sparksToNext = rank.nextSparksRequired !== null

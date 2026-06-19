@@ -38,36 +38,13 @@ export async function POST(req: NextRequest) {
   if (lastUser) {
     const safety = classifyInput(lastUser.content);
     if (!safety.safe) {
-      // Log both the child's message and the redirect as an escalation
-      logMessage({
-        sessionId,
-        childProfileId: childProfileId ?? null,
-        lessonId: lesson.id,
-        role: "user",
-        content: lastUser.content,
-      });
       const escalationResponse = `[ESCALATE] ${safety.redirectResponse}`;
-      logMessage({
-        sessionId,
-        childProfileId: childProfileId ?? null,
-        lessonId: lesson.id,
-        role: "assistant",
-        content: escalationResponse,
-      });
-      return Response.json({
-        role: "assistant",
-        content: safety.redirectResponse,
-      });
+      await logMessage({ sessionId, childProfileId: childProfileId ?? null, lessonId: lesson.id, role: "user",      content: lastUser.content });
+      await logMessage({ sessionId, childProfileId: childProfileId ?? null, lessonId: lesson.id, role: "assistant", content: escalationResponse });
+      return Response.json({ role: "assistant", content: safety.redirectResponse });
     }
 
-    // Safe — log the user message before calling Claude
-    logMessage({
-      sessionId,
-      childProfileId: childProfileId ?? null,
-      lessonId: lesson.id,
-      role: "user",
-      content: lastUser.content,
-    });
+    await logMessage({ sessionId, childProfileId: childProfileId ?? null, lessonId: lesson.id, role: "user", content: lastUser.content });
   }
 
   // ── Claude call ──────────────────────────────────────────────────────────
@@ -88,13 +65,7 @@ export async function POST(req: NextRequest) {
   const text =
     response.content[0].type === "text" ? response.content[0].text : "";
 
-  logMessage({
-    sessionId,
-    childProfileId: childProfileId ?? null,
-    lessonId: lesson.id,
-    role: "assistant",
-    content: text,
-  });
+  await logMessage({ sessionId, childProfileId: childProfileId ?? null, lessonId: lesson.id, role: "assistant", content: text });
 
   return Response.json({ role: "assistant", content: text });
 }

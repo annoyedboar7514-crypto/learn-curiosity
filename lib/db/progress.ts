@@ -1,7 +1,6 @@
-import db from "./index";
+import { sql } from "./index";
 import { getLessonById } from "@/lib/content/lesson-registry";
 
-// ── Rank ladder ──────────────────────────────────────────────────────────────
 export interface RankInfo {
   level: number;
   title: string;
@@ -11,12 +10,12 @@ export interface RankInfo {
 }
 
 const RANKS: RankInfo[] = [
-  { level: 1, title: "Curious Mind",    icon: "🌱", sparksRequired: 0,   nextSparksRequired: 20  },
-  { level: 2, title: "Young Explorer",  icon: "🧭", sparksRequired: 20,  nextSparksRequired: 50  },
-  { level: 3, title: "Question Seeker", icon: "🔍", sparksRequired: 50,  nextSparksRequired: 100 },
-  { level: 4, title: "Deep Thinker",    icon: "💭", sparksRequired: 100, nextSparksRequired: 200 },
-  { level: 5, title: "Wisdom Scout",    icon: "⭐", sparksRequired: 200, nextSparksRequired: 350 },
-  { level: 6, title: "Sage in Training",icon: "🦉", sparksRequired: 350, nextSparksRequired: null },
+  { level: 1, title: "Curious Mind",     icon: "🌱", sparksRequired: 0,   nextSparksRequired: 20  },
+  { level: 2, title: "Young Explorer",   icon: "🧭", sparksRequired: 20,  nextSparksRequired: 50  },
+  { level: 3, title: "Question Seeker",  icon: "🔍", sparksRequired: 50,  nextSparksRequired: 100 },
+  { level: 4, title: "Deep Thinker",     icon: "💭", sparksRequired: 100, nextSparksRequired: 200 },
+  { level: 5, title: "Wisdom Scout",     icon: "⭐", sparksRequired: 200, nextSparksRequired: 350 },
+  { level: 6, title: "Sage in Training", icon: "🦉", sparksRequired: 350, nextSparksRequired: null },
 ];
 
 export function getRank(sparks: number): RankInfo & { progressPct: number } {
@@ -35,17 +34,6 @@ export function getRank(sparks: number): RankInfo & { progressPct: number } {
   return { ...rank, progressPct: Math.min(pct, 100) };
 }
 
-// ── Sparks formula ──────────────────────────────────────────────────────────
-// 10 per session + 2 per user reflection message + 5 bonus per new pillar
-function computeSparks(
-  sessions: number,
-  userMessages: number,
-  uniquePillars: number
-): number {
-  return sessions * 10 + userMessages * 2 + uniquePillars * 5;
-}
-
-// ── Progress object ──────────────────────────────────────────────────────────
 export interface ChildProgress {
   sparks: number;
   totalSessions: number;
@@ -56,34 +44,20 @@ export interface ChildProgress {
   recentLessonIds: string[];
 }
 
-export function getProgress(childProfileId: string | null): ChildProgress {
-  const where = childProfileId
-    ? "WHERE child_profile_id = ?"
-    : "WHERE child_profile_id IS NULL";
-  const param = childProfileId ?? null;
+export async function getProgress(childProfileId: string | null): Promise<ChildProgress> {
+  const [sessionRow, lessonRows, recentRows] = childProfileId
+    ? await Promise.all([
+        sql`SELECT COUNT(DISTINCT session_id) AS sessions, COUNT(*) FILTER (WHERE role = 'user') AS user_messages FROM messages WHERE child_profile_id = ${childProfileId}`,
+        sql`SELECT DISTINCT lesson_id FROM messages WHERE child_profile_id = ${childProfileId}`,
+        sql`SELECT lesson_id FROM messages WHERE child_profile_id = ${childProfileId} GROUP BY lesson_id ORDER BY MAX(created_at) DESC LIMIT 5`,
+      ])
+    : await Promise.all([
+        sql`SELECT COUNT(DISTINCT session_id) AS sessions, COUNT(*) FILTER (WHERE role = 'user') AS user_messages FROM messages WHERE child_profile_id IS NULL`,
+        sql`SELECT DISTINCT lesson_id FROM messages WHERE child_profile_id IS NULL`,
+        sql`SELECT lesson_id FROM messages WHERE child_profile_id IS NULL GROUP BY lesson_id ORDER BY MAX(created_at) DESC LIMIT 5`,
+      ]);
 
-  const sessionRow = db
-    .prepare(
-      `SELECT COUNT(DISTINCT session_id) AS sessions,
-              COUNT(CASE WHEN role='user' THEN 1 END) AS user_messages
-       FROM messages ${where}`
-    )
-    .get(param) as { sessions: number; user_messages: number };
-
-  const lessonRows = db
-    .prepare(
-      `SELECT DISTINCT lesson_id FROM messages ${where}`
-    )
-    .all(param) as { lesson_id: string }[];
-
-  const recentRows = db
-    .prepare(
-      `SELECT DISTINCT lesson_id FROM messages ${where}
-       ORDER BY created_at DESC LIMIT 5`
-    )
-    .all(param) as { lesson_id: string }[];
-
-  const uniqueLessons = lessonRows.map((r) => r.lesson_id);
+  const uniqueLessons = lessonRows.map((r) => String(r.lesson_id));
 
   const uniquePillars = [
     ...new Set(
@@ -93,9 +67,9 @@ export function getProgress(childProfileId: string | null): ChildProgress {
     ),
   ];
 
-  const totalSessions = sessionRow.sessions;
-  const totalUserMessages = sessionRow.user_messages;
-  const sparks = computeSparks(totalSessions, totalUserMessages, uniquePillars.length);
+  const totalSessions     = Number(sessionRow[0]?.sessions ?? 0);
+  const totalUserMessages = Number(sessionRow[0]?.user_messages ?? 0);
+  const sparks = totalSessions * 10 + totalUserMessages * 2 + uniquePillars.length * 5;
 
   return {
     sparks,
@@ -104,6 +78,6 @@ export function getProgress(childProfileId: string | null): ChildProgress {
     uniquePillars,
     uniqueLessons,
     rank: getRank(sparks),
-    recentLessonIds: recentRows.map((r) => r.lesson_id),
+    recentLessonIds: recentRows.map((r) => String(r.lesson_id)),
   };
 }

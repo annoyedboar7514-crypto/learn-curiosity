@@ -3,6 +3,7 @@ import Image from "next/image";
 import { notFound } from "next/navigation";
 import { getSessionMessages } from "@/lib/db/sessions";
 import { getLessonById } from "@/lib/content/lesson-registry";
+import { sql } from "@/lib/db/index";
 
 const PILLAR_LABELS: Record<string, string> = {
   "critical-thinking": "Critical Thinking",
@@ -28,19 +29,18 @@ export default async function SessionDetailPage({
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
-  const messages = getSessionMessages(id);
+
+  const [messages, metaRows] = await Promise.all([
+    getSessionMessages(id),
+    sql`SELECT MIN(lesson_id) AS lesson_id, MIN(created_at) AS started_at FROM messages WHERE session_id = ${id}`,
+  ]);
 
   if (messages.length === 0) notFound();
 
-  // lesson_id is retrieved below via direct db query — this call is unused
+  const metaRow = metaRows[0];
+  if (!metaRow?.lesson_id) notFound();
 
-  // Re-fetch with lesson_id by importing db directly for the session metadata
-  const { default: db } = await import("@/lib/db/index");
-  const meta = db
-    .prepare("SELECT lesson_id, MIN(created_at) AS started_at FROM messages WHERE session_id = ?")
-    .get(id) as { lesson_id: string; started_at: number } | undefined;
-
-  if (!meta) notFound();
+  const meta = { lesson_id: String(metaRow.lesson_id), started_at: Number(metaRow.started_at) };
 
   const resolvedLesson = getLessonById(meta.lesson_id);
   const hasEscalation = messages.some(

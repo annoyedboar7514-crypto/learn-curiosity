@@ -1,5 +1,5 @@
 import { cookies } from "next/headers";
-import db from "./db/index";
+import { sql } from "./db/index";
 
 export interface ChildProfile {
   id: string;
@@ -18,17 +18,19 @@ export async function getChildProfile(): Promise<ChildProfile | null> {
   const id = await getChildProfileId();
   if (!id) return null;
 
-  const row = db
-    .prepare("SELECT id, nickname, grade_band, archetype, mentor_id FROM child_profiles WHERE id = ?")
-    .get(id) as { id: string; nickname: string; grade_band: string; archetype: string | null; mentor_id: string | null } | undefined;
+  const [row] = await sql`
+    SELECT id, nickname, grade_band, archetype, mentor_id
+    FROM child_profiles
+    WHERE id = ${id}
+  `;
 
   if (!row) return null;
 
   return {
-    id: row.id,
-    nickname: row.nickname,
-    gradeBand: row.grade_band,
-    archetype: row.archetype,
-    mentorId: row.mentor_id,
+    id:        String(row.id),
+    nickname:  String(row.nickname),
+    gradeBand: String(row.grade_band),
+    archetype: row.archetype ? String(row.archetype) : null,
+    mentorId:  row.mentor_id ? String(row.mentor_id) : null,
   };
 }

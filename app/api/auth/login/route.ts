@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import db from "@/lib/db/index";
+import { sql } from "@/lib/db/index";
 
 export async function POST(req: NextRequest) {
   try {
@@ -9,30 +9,30 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Email and password are required" }, { status: 400 });
     }
 
-    const parent = db
-      .prepare("SELECT id, password_hash FROM parent_accounts WHERE email = ?")
-      .get(email.toLowerCase().trim()) as { id: string; password_hash: string } | undefined;
+    const [parent] = await sql`
+      SELECT id, password_hash FROM parent_accounts WHERE email = ${email.toLowerCase().trim()}
+    `;
 
     if (!parent) {
       return NextResponse.json({ error: "No account found with that email." }, { status: 401 });
     }
 
-    // TODO: replace with bcrypt.compare() before launch
+    // TODO: replace with bcrypt.compare before launch
     const hash = Buffer.from(password).toString("base64");
-    if (hash !== parent.password_hash) {
+    if (hash !== String(parent.password_hash)) {
       return NextResponse.json({ error: "Incorrect password." }, { status: 401 });
     }
 
-    const child = db
-      .prepare("SELECT id FROM child_profiles WHERE parent_id = ? ORDER BY created_at ASC LIMIT 1")
-      .get(parent.id) as { id: string } | undefined;
+    const [child] = await sql`
+      SELECT id FROM child_profiles WHERE parent_id = ${String(parent.id)} ORDER BY created_at ASC LIMIT 1
+    `;
 
     if (!child) {
-      return NextResponse.json({ error: "No child profile found. Please contact support." }, { status: 404 });
+      return NextResponse.json({ error: "No child profile found." }, { status: 404 });
     }
 
     const res = NextResponse.json({ success: true });
-    res.cookies.set("lc_child_id", child.id, {
+    res.cookies.set("lc_child_id", String(child.id), {
       httpOnly: true,
       sameSite: "lax",
       path: "/",
