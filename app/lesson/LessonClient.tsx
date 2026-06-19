@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
+import Link from "next/link";
 import Image from "next/image";
 import type { Lesson, ChoiceType } from "@/lib/content/lesson.types";
 import type { MentorCharacter } from "@/lib/mentor/mentor-characters";
@@ -247,6 +248,21 @@ export default function LessonClient({
                   Send
                 </button>
               </form>
+
+              {/* Progress link — appears after 2 full exchanges */}
+              {chatMessages.length >= 4 && (
+                <div className="mt-6 pt-5 border-t border-gray-100 flex flex-col items-center gap-2">
+                  <p className="text-xs text-gray-400 font-body">
+                    Great thinking — you earned sparks for this reflection.
+                  </p>
+                  <Link
+                    href="/student"
+                    className="px-6 py-2.5 rounded-full border-2 border-[#1e3a52] text-[#1e3a52] text-sm font-semibold hover:bg-[#1e3a52] hover:text-white transition-all"
+                  >
+                    ⭐ See your progress
+                  </Link>
+                </div>
+              )}
             </div>
           )}
         </div>
