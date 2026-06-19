@@ -1,10 +1,12 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { questions, archetypeResults, scoreQuiz } from "@/lib/quiz/archetype-quiz";
 import type { Archetype } from "@/lib/content/lesson.types";
 
 export default function ArchetypeQuiz() {
+  const router = useRouter();
   const [step, setStep] = useState(0);
   const [scores, setScores] = useState<Partial<Record<Archetype, number>>>({});
   const [chosen, setChosen] = useState<Archetype | null>(null);
@@ -56,6 +58,7 @@ export default function ArchetypeQuiz() {
               Try again
             </button>
             <button
+              onClick={() => router.push(`/mentor?archetype=${result}`)}
               className={`px-8 py-3 rounded-full text-white font-semibold transition-colors cursor-pointer ${r.accentColor} opacity-90 hover:opacity-100`}
             >
               Start learning →

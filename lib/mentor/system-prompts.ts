@@ -4,18 +4,20 @@ export interface PromptContext {
   mentorName: string;
   childName: string;
   lesson: Lesson;
+  voiceNote?: string; // Mentor character personality, prepended to the base prompt
 }
 
-// Returns the correct age-banded system prompt for a session.
+// Returns the correct age-banded system prompt for a session,
+// optionally prepended with the mentor character's voice note.
 export function buildSystemPrompt(ctx: PromptContext): string {
-  switch (ctx.lesson.gradeBand) {
-    case "K-2":
-      return k2Prompt(ctx);
-    case "3-4":
-      return grade34Prompt(ctx);
-    case "5-6":
-      return grade56Prompt(ctx);
-  }
+  const base = (() => {
+    switch (ctx.lesson.gradeBand) {
+      case "K-2": return k2Prompt(ctx);
+      case "3-4": return grade34Prompt(ctx);
+      case "5-6": return grade56Prompt(ctx);
+    }
+  })();
+  return ctx.voiceNote ? `${ctx.voiceNote}\n\n${base}` : base;
 }
 
 // ---------------------------------------------------------------------------
