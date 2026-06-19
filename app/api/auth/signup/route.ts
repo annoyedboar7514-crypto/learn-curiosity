@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import db from "@/lib/db/index";
+import { randomUUID } from "crypto";
 
 export async function POST(req: NextRequest) {
   try {
@@ -13,40 +14,8 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "All consent fields are required" }, { status: 400 });
     }
 
-    // Ensure tables exist
-    db.exec(`
-      CREATE TABLE IF NOT EXISTS parent_accounts (
-        id TEXT PRIMARY KEY,
-        email TEXT UNIQUE NOT NULL,
-        password_hash TEXT NOT NULL,
-        created_at INTEGER NOT NULL DEFAULT (unixepoch())
-      );
-
-      CREATE TABLE IF NOT EXISTS coppa_consent (
-        id TEXT PRIMARY KEY,
-        parent_id TEXT NOT NULL,
-        agreed_to_terms INTEGER NOT NULL,
-        agreed_to_coppa INTEGER NOT NULL,
-        agreed_to_age INTEGER NOT NULL,
-        consented_at INTEGER NOT NULL DEFAULT (unixepoch()),
-        FOREIGN KEY (parent_id) REFERENCES parent_accounts(id)
-      );
-
-      CREATE TABLE IF NOT EXISTS child_profiles (
-        id TEXT PRIMARY KEY,
-        parent_id TEXT NOT NULL,
-        nickname TEXT NOT NULL,
-        grade_band TEXT NOT NULL,
-        archetype TEXT,
-        mentor_id TEXT,
-        created_at INTEGER NOT NULL DEFAULT (unixepoch()),
-        FOREIGN KEY (parent_id) REFERENCES parent_accounts(id)
-      );
-    `);
-
-    const { randomUUID } = await import("crypto");
-    const parentId = randomUUID();
-    const childId  = randomUUID();
+    const parentId  = randomUUID();
+    const childId   = randomUUID();
     const consentId = randomUUID();
 
     // TODO: replace with bcrypt/argon2 before launch
@@ -64,7 +33,14 @@ export async function POST(req: NextRequest) {
       "INSERT INTO child_profiles (id, parent_id, nickname, grade_band) VALUES (?, ?, ?, ?)"
     ).run(childId, parentId, child.nickname.trim(), child.gradeBand);
 
-    return NextResponse.json({ success: true, childProfileId: childId });
+    const res = NextResponse.json({ success: true, childProfileId: childId });
+    res.cookies.set("lc_child_id", childId, {
+      httpOnly: true,
+      sameSite: "lax",
+      path: "/",
+      maxAge: 60 * 60 * 24 * 30, // 30 days
+    });
+    return res;
   } catch (err) {
     const message = err instanceof Error ? err.message : "Unknown error";
     if (message.includes("UNIQUE constraint failed")) {

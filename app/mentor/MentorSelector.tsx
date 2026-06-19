@@ -9,7 +9,12 @@ export default function MentorSelector() {
   const router = useRouter();
   const archetype = params.get("archetype") ?? "explorer";
 
-  function choose(mentorId: string) {
+  async function choose(mentorId: string) {
+    await fetch("/api/profile/update", {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ field: "mentor_id", value: mentorId }),
+    }).catch(() => {/* anonymous — ok to fail silently */});
     router.push(`/lesson?archetype=${archetype}&mentor=${mentorId}`);
   }
 

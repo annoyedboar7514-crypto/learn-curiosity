@@ -53,11 +53,11 @@ export default function StickyHeader() {
           <Link href="/dashboard" className="text-sm font-body text-navy/70 hover:text-navy transition-colors">
             Dashboard
           </Link>
-          <Link href="/sign-in" className="text-sm font-body text-navy/70 hover:text-navy transition-colors">
+          <Link href="/login" className="text-sm font-body text-navy/70 hover:text-navy transition-colors">
             Log In
           </Link>
           <Link
-            href="/quiz"
+            href="/signup"
             className="px-5 py-2 rounded-full bg-teal text-cream text-sm font-semibold hover:bg-teal/90 transition-colors"
           >
             Start Free Trial
@@ -66,7 +66,7 @@ export default function StickyHeader() {
 
         {/* Mobile CTA */}
         <Link
-          href="/quiz"
+          href="/signup"
           className="md:hidden px-4 py-2 rounded-full bg-teal text-cream text-sm font-semibold"
         >
           Start Free Trial

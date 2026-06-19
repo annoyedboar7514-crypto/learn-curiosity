@@ -11,6 +11,34 @@ const g = global as typeof globalThis & { __learnDb?: Database.Database };
 if (!g.__learnDb) {
   g.__learnDb = new Database(path.join(DATA_DIR, "messages.db"));
   g.__learnDb.exec(`
+    CREATE TABLE IF NOT EXISTS parent_accounts (
+      id            TEXT PRIMARY KEY,
+      email         TEXT UNIQUE NOT NULL,
+      password_hash TEXT NOT NULL,
+      created_at    INTEGER NOT NULL DEFAULT (unixepoch())
+    );
+
+    CREATE TABLE IF NOT EXISTS coppa_consent (
+      id              TEXT PRIMARY KEY,
+      parent_id       TEXT NOT NULL,
+      agreed_to_terms INTEGER NOT NULL,
+      agreed_to_coppa INTEGER NOT NULL,
+      agreed_to_age   INTEGER NOT NULL,
+      consented_at    INTEGER NOT NULL DEFAULT (unixepoch()),
+      FOREIGN KEY (parent_id) REFERENCES parent_accounts(id)
+    );
+
+    CREATE TABLE IF NOT EXISTS child_profiles (
+      id         TEXT PRIMARY KEY,
+      parent_id  TEXT NOT NULL,
+      nickname   TEXT NOT NULL,
+      grade_band TEXT NOT NULL,
+      archetype  TEXT,
+      mentor_id  TEXT,
+      created_at INTEGER NOT NULL DEFAULT (unixepoch()),
+      FOREIGN KEY (parent_id) REFERENCES parent_accounts(id)
+    );
+
     CREATE TABLE IF NOT EXISTS messages (
       id               INTEGER PRIMARY KEY AUTOINCREMENT,
       session_id       TEXT    NOT NULL,
@@ -20,6 +48,7 @@ if (!g.__learnDb) {
       content          TEXT    NOT NULL,
       created_at       INTEGER NOT NULL DEFAULT (unixepoch())
     );
+
     CREATE INDEX IF NOT EXISTS idx_messages_session ON messages(session_id);
     CREATE INDEX IF NOT EXISTS idx_messages_child   ON messages(child_profile_id);
   `);

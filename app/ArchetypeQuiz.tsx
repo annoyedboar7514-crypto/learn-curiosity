@@ -73,7 +73,14 @@ export default function ArchetypeQuiz() {
               Try again
             </button>
             <button
-              onClick={() => router.push(`/mentor?archetype=${result}`)}
+              onClick={async () => {
+                await fetch("/api/profile/update", {
+                  method: "PATCH",
+                  headers: { "Content-Type": "application/json" },
+                  body: JSON.stringify({ field: "archetype", value: result }),
+                }).catch(() => {/* anonymous — ok to fail silently */});
+                router.push(`/mentor?archetype=${result}`);
+              }}
               className={`px-8 py-3 rounded-full text-white font-semibold transition-colors cursor-pointer ${r.accentColor} opacity-90 hover:opacity-100`}
             >
               Start learning →

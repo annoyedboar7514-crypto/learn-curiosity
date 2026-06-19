@@ -2,20 +2,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { getSessions, getStats } from "@/lib/db/sessions";
 import { getLessonById } from "@/lib/content/lesson-registry";
-
-const CLERK_KEY = process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY ?? "";
-const CLERK_ENABLED = /^pk_(test|live)_/.test(CLERK_KEY) && CLERK_KEY.length > 40;
-
-async function getChildProfileId(): Promise<string | null> {
-  if (!CLERK_ENABLED) return null;
-  try {
-    const { auth } = await import("@clerk/nextjs/server");
-    const { userId } = await auth();
-    return userId;
-  } catch {
-    return null;
-  }
-}
+import { getChildProfileId } from "@/lib/session";
 
 const PILLAR_LABELS: Record<string, string> = {
   "critical-thinking": "Critical Thinking",

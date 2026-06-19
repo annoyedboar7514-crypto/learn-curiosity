@@ -56,7 +56,7 @@ export default function HomePage() {
 
             <div className="flex flex-col items-start gap-2">
               <Link
-                href="/quiz"
+                href="/signup"
                 className="inline-block px-8 py-4 rounded-full bg-teal text-cream font-semibold font-body text-base hover:bg-teal/90 transition-colors"
               >
                 Find Your Child&apos;s Mentor
@@ -154,7 +154,7 @@ export default function HomePage() {
             Let your child ask their next question.
           </h2>
           <Link
-            href="/quiz"
+            href="/signup"
             className="inline-block px-10 py-4 rounded-full bg-cream text-teal font-semibold font-body text-base hover:bg-cream/90 transition-colors"
           >
             Start Free Trial
