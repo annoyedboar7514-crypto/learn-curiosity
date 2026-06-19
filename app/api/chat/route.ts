@@ -4,6 +4,7 @@ import { buildSystemPrompt } from "@/lib/mentor/system-prompts";
 import { getMentorCharacter } from "@/lib/mentor/mentor-characters";
 import { getLessonForArchetype } from "@/lib/content/lesson-registry";
 import { logMessage } from "@/lib/db/index";
+import { classifyInput } from "@/lib/safety/index";
 import type { Archetype, GradeBand } from "@/lib/content/lesson.types";
 
 const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
@@ -32,16 +33,34 @@ export async function POST(req: NextRequest) {
   );
   const mentor = getMentorCharacter(mentorId);
 
-  const systemPrompt = buildSystemPrompt({
-    mentorName: mentor.name,
-    childName: "you",
-    lesson,
-    voiceNote: mentor.voiceNote,
-  });
-
-  // Log the newest user message (last in the array)
+  // ── Safety check on the child's latest message ────────────────────────────
   const lastUser = [...messages].reverse().find((m) => m.role === "user");
   if (lastUser) {
+    const safety = classifyInput(lastUser.content);
+    if (!safety.safe) {
+      // Log both the child's message and the redirect as an escalation
+      logMessage({
+        sessionId,
+        childProfileId: childProfileId ?? null,
+        lessonId: lesson.id,
+        role: "user",
+        content: lastUser.content,
+      });
+      const escalationResponse = `[ESCALATE] ${safety.redirectResponse}`;
+      logMessage({
+        sessionId,
+        childProfileId: childProfileId ?? null,
+        lessonId: lesson.id,
+        role: "assistant",
+        content: escalationResponse,
+      });
+      return Response.json({
+        role: "assistant",
+        content: safety.redirectResponse,
+      });
+    }
+
+    // Safe — log the user message before calling Claude
     logMessage({
       sessionId,
       childProfileId: childProfileId ?? null,
@@ -50,6 +69,14 @@ export async function POST(req: NextRequest) {
       content: lastUser.content,
     });
   }
+
+  // ── Claude call ──────────────────────────────────────────────────────────
+  const systemPrompt = buildSystemPrompt({
+    mentorName: mentor.name,
+    childName: "you",
+    lesson,
+    voiceNote: mentor.voiceNote,
+  });
 
   const response = await anthropic.messages.create({
     model: "claude-haiku-4-5-20251001",
