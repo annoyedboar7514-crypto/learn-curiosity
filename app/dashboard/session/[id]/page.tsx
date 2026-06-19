@@ -32,10 +32,7 @@ export default async function SessionDetailPage({
 
   if (messages.length === 0) notFound();
 
-  const lesson = getLessonById(messages[0] ? (() => {
-    // We need lesson_id — fetch it directly
-    return "";
-  })() : "");
+  // lesson_id is retrieved below via direct db query — this call is unused
 
   // Re-fetch with lesson_id by importing db directly for the session metadata
   const { default: db } = await import("@/lib/db/index");

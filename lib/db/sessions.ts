@@ -1,5 +1,21 @@
 import db from "./index";
 
+interface RawSessionRow {
+  session_id: string;
+  child_profile_id: string | null;
+  lesson_id: string;
+  message_count: number;
+  started_at: number;
+  last_message_at: number;
+  has_escalation: number;
+}
+
+interface RawMessageRow {
+  role: string;
+  content: string;
+  created_at: number;
+}
+
 export interface SessionRow {
   sessionId: string;
   childProfileId: string | null;
@@ -35,8 +51,8 @@ export function getSessions(childProfileId?: string | null): SessionRow[] {
     ORDER BY started_at DESC
   `;
   const rows = childProfileId
-    ? (db.prepare(base).all(childProfileId) as any[])
-    : (db.prepare(base).all() as any[]);
+    ? (db.prepare(base).all(childProfileId) as RawSessionRow[])
+    : (db.prepare(base).all() as RawSessionRow[]);
 
   return rows.map((r) => ({
     sessionId: r.session_id,
@@ -58,7 +74,7 @@ export function getSessionMessages(sessionId: string): MessageRow[] {
        WHERE session_id = ?
        ORDER BY created_at ASC`
     )
-    .all(sessionId) as any[];
+    .all(sessionId) as RawMessageRow[];
 
   return rows.map((r) => ({
     role: r.role as "user" | "assistant",

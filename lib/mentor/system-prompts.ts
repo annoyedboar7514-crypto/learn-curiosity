@@ -1,4 +1,4 @@
-import type { GradeBand, Lesson } from "../content/lesson.types";
+import type { Lesson } from "../content/lesson.types";
 
 export interface PromptContext {
   mentorName: string;
