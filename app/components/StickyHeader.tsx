@@ -50,6 +50,9 @@ export default function StickyHeader() {
           <Link href="/#pricing" className="text-sm font-body text-navy/70 hover:text-navy transition-colors">
             Pricing
           </Link>
+          <Link href="/dashboard" className="text-sm font-body text-navy/70 hover:text-navy transition-colors">
+            Dashboard
+          </Link>
           <Link href="/sign-in" className="text-sm font-body text-navy/70 hover:text-navy transition-colors">
             Log In
           </Link>

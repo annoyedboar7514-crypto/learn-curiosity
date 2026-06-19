@@ -9,6 +9,12 @@ const registry: Partial<Record<RegistryKey, Lesson>> = {
   "astronaut:3-4": astronautLesson,
 };
 
+const allLessons: Lesson[] = [detectiveLesson, astronautLesson];
+
+export function getLessonById(id: string): Lesson | null {
+  return allLessons.find((l) => l.id === id) ?? null;
+}
+
 // Returns the lesson for a given archetype and grade band.
 // Falls back to the detective lesson when no skin exists yet for that combination.
 export function getLessonForArchetype(
