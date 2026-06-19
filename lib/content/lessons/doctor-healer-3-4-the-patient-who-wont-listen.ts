@@ -4,7 +4,7 @@ const lesson: Lesson = {
   id: "doctor-healer-3-4-cp-the-patient-who-wont-listen",
   title: "The Patient Who Won't Listen",
 
-  pillar: "communication-persuasion",
+  pillar: "communication-articulation",
   secondaryPillars: ["resilience-character"],
   gradeBand: "3-4",
   archetype: "doctor-healer",
@@ -148,14 +148,14 @@ He drinks it down fast. His face is complicated.
   ],
 
   parentSummary:
-    "Today's lesson gave your child a persuasion problem with real stakes — " +
+    "Today's lesson gave your child a communication challenge with real stakes — " +
     "getting a resistant younger sibling to take medicine without forcing or " +
     "tricking them in a way that breaks trust. The four consequence branches " +
     "explore the difference between understanding resistance vs. overpowering it, " +
     "and between avoidance and creative problem-solving. The reflection questions " +
     "examine what it means to truly persuade someone vs. coerce them, and why " +
     "asking questions often works better than stating reasons. This lesson targets " +
-    "Pillar 4: Communication & Persuasion, with a thread of Pillar 2: Resilience.",
+    "Pillar 4: Communication & Articulation, with a thread of Pillar 2: Resilience.",
 };
 
 export default lesson;

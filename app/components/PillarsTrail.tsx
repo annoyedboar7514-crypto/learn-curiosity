@@ -5,7 +5,7 @@ const PILLARS = [
   { icon: "🧠", label: "Critical Thinking" },
   { icon: "🌱", label: "Resilience & Character" },
   { icon: "💡", label: "Creativity & Vision" },
-  { icon: "💬", label: "Communication" },
+  { icon: "💬", label: "Communication & Articulation" },
   { icon: "🔄", label: "Learning How to Learn" },
 ];
 

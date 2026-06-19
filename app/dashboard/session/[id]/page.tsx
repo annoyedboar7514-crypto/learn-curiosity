@@ -8,7 +8,7 @@ const PILLAR_LABELS: Record<string, string> = {
   "critical-thinking": "Critical Thinking",
   "resilience-character": "Resilience & Character",
   "creativity-vision": "Creativity & Vision",
-  "communication-persuasion": "Communication",
+  "communication-articulation": "Communication & Articulation",
   "learning-how-to-learn": "Learning How to Learn",
 };
 

@@ -21,7 +21,7 @@ const PILLAR_LABELS: Record<string, string> = {
   "critical-thinking": "Critical Thinking",
   "resilience-character": "Resilience & Character",
   "creativity-vision": "Creativity & Vision",
-  "communication-persuasion": "Communication",
+  "communication-articulation": "Communication & Articulation",
   "learning-how-to-learn": "Learning How to Learn",
 };
 
@@ -29,7 +29,7 @@ const PILLAR_COLORS: Record<string, string> = {
   "critical-thinking": "bg-indigo-100 text-indigo-800",
   "resilience-character": "bg-green-100 text-green-800",
   "creativity-vision": "bg-pink-100 text-pink-800",
-  "communication-persuasion": "bg-amber-100 text-amber-800",
+  "communication-articulation": "bg-amber-100 text-amber-800",
   "learning-how-to-learn": "bg-teal/10 text-teal",
 };
 

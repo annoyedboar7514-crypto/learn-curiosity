@@ -13,7 +13,7 @@ All content — regardless of a child's archetype — is built from five core pi
 1. **Critical Thinking & Philosophical Reasoning** — asking good questions, identifying assumptions, spotting logical gaps, reasoning through cause and effect.
 2. **Resilience, Character & Moral Values** — stories show realistic consequences of choices, building an intuitive (non-lectured) sense of honesty, fairness, courage, and empathy.
 3. **Creativity & Vision** — children reframe problems, imagine alternate outcomes, or invent solutions before the story resolves.
-4. **Communication & Persuasion** — children explain their reasoning, defend a position, and consider counter-arguments in low-stakes dialogue.
+4. **Communication & Articulation** — children explain their reasoning clearly, defend a position in their own words, and consider counter-arguments in low-stakes dialogue.
 5. **Learning How to Learn** — metacognition and systems thinking; children notice their own thinking and how pieces connect to larger systems.
 
 ## The Mentor & Archetype System

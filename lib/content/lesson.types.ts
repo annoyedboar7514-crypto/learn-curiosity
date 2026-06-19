@@ -2,7 +2,7 @@ export type Pillar =
   | "critical-thinking"
   | "resilience-character"
   | "creativity-vision"
-  | "communication-persuasion"
+  | "communication-articulation"
   | "learning-how-to-learn";
 
 export type GradeBand = "K-2" | "3-4" | "5-6";
