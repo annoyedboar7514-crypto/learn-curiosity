@@ -400,10 +400,10 @@ const StepChildProfile: React.FC<{
   onBack: () => void;
   loading?: boolean;
 }> = ({ data, onChange, onNext, onBack, loading }) => {
-  const [errors, setErrors] = useState<Partial<ChildForm>>({});
+  const [errors, setErrors] = useState<Record<string, string>>({});
 
   const validate = () => {
-    const e: Partial<ChildForm> = {};
+    const e: Record<string, string> = {};
     if (!data.nickname.trim() || data.nickname.trim().length < 2) e.nickname = "Enter a nickname (at least 2 characters).";
     if (!data.gradeBand) e.gradeBand = "Please select a grade band.";
     setErrors(e);
