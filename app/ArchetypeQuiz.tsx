@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import Image from "next/image";
 import { questions, archetypeResults, scoreQuiz } from "@/lib/quiz/archetype-quiz";
 import type { Archetype } from "@/lib/content/lesson.types";
 
@@ -39,7 +40,21 @@ export default function ArchetypeQuiz() {
     return (
       <div className={`min-h-screen flex flex-col items-center justify-center px-6 py-16 ${r.bgColor}`}>
         <div className="max-w-lg w-full text-center">
-          <div className="text-8xl mb-6 select-none">{r.emoji}</div>
+          {/* Brand mark on result screen */}
+          <div className="flex justify-center mb-6">
+            <div className="relative w-[80px] h-[60px]">
+              <Image
+                src="/brand/Logo.png"
+                alt="Learn Curiosity"
+                fill
+                sizes="80px"
+                className="object-contain"
+                priority
+              />
+            </div>
+          </div>
+
+          <div className="text-7xl mb-4 select-none">{r.emoji}</div>
           <p className="text-xs font-bold uppercase tracking-widest text-gray-400 mb-2">
             You are
           </p>
@@ -73,15 +88,22 @@ export default function ArchetypeQuiz() {
   const progressPct = (step / questions.length) * 100;
 
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center px-4 py-12 bg-white">
+    <div className="min-h-screen flex flex-col items-center justify-center px-4 py-12 bg-[#faf9f7]">
       <div className="max-w-2xl w-full">
 
-        {/* Brand */}
-        <div className="text-center mb-10">
-          <p className="text-xs font-bold uppercase tracking-widest text-indigo-500 mb-1">
-            Learn Curiosity
-          </p>
-          <h1 className="text-2xl font-bold text-gray-900">Find your guide</h1>
+        {/* Brand header */}
+        <div className="flex flex-col items-center mb-10">
+          <div className="relative w-[140px] h-[105px] mb-3">
+            <Image
+              src="/brand/Logo.png"
+              alt="Learn Curiosity"
+              fill
+              sizes="140px"
+              className="object-contain"
+              priority
+            />
+          </div>
+          <h1 className="text-2xl font-bold text-[#1e3a52]">Find your guide</h1>
           <p className="text-sm text-gray-400 mt-1">Answer 5 quick questions</p>
         </div>
 
@@ -91,9 +113,9 @@ export default function ArchetypeQuiz() {
             <span>Question {step + 1} of {questions.length}</span>
             <span>{Math.round(progressPct)}% done</span>
           </div>
-          <div className="w-full h-2 bg-gray-100 rounded-full overflow-hidden">
+          <div className="w-full h-2 bg-[#f0e8d8] rounded-full overflow-hidden">
             <div
-              className="h-full bg-indigo-500 rounded-full transition-all duration-500"
+              className="h-full bg-[#1e3a52] rounded-full transition-all duration-500"
               style={{ width: `${progressPct}%` }}
             />
           </div>
@@ -117,10 +139,10 @@ export default function ArchetypeQuiz() {
                 className={[
                   "flex flex-col items-center gap-2 p-4 rounded-2xl border-2 text-center transition-all duration-200 cursor-pointer",
                   isChosen
-                    ? "border-indigo-500 bg-indigo-50 scale-95 shadow-sm"
+                    ? "border-[#1e3a52] bg-[#f0e8d8] scale-95 shadow-sm"
                     : isDimmed
                     ? "border-gray-100 opacity-40 cursor-default"
-                    : "border-gray-200 hover:border-indigo-300 hover:bg-indigo-50 hover:scale-[1.02] active:scale-95",
+                    : "border-gray-200 hover:border-[#1e3a52] hover:bg-[#f0e8d8] hover:scale-[1.02] active:scale-95",
                 ].join(" ")}
               >
                 <span className="text-4xl select-none">{opt.emoji}</span>

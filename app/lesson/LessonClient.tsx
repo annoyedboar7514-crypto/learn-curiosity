@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
+import Image from "next/image";
 import type { Lesson, ChoiceType } from "@/lib/content/lesson.types";
 import type { MentorCharacter } from "@/lib/mentor/mentor-characters";
 
@@ -107,18 +108,30 @@ export default function LessonClient({
   }
 
   return (
-    <div className="min-h-screen flex flex-col bg-gray-50">
+    <div className="min-h-screen flex flex-col bg-[#faf9f7]">
       {/* Top bar */}
-      <header className="bg-white border-b border-gray-100 px-4 py-3 flex items-center gap-3">
-        <span className="text-2xl select-none">{mentor.emoji}</span>
+      <header className="bg-white border-b border-[#f0e8d8] px-4 py-3 flex items-center gap-3">
+        {/* Brand logo */}
+        <div className="relative w-[40px] h-[30px] shrink-0">
+          <Image
+            src="/brand/Logo.png"
+            alt="Learn Curiosity"
+            fill
+            sizes="40px"
+            className="object-contain"
+          />
+        </div>
+        <div className="w-px h-6 bg-gray-200 mx-1 shrink-0" />
+        {/* Mentor info */}
+        <span className="text-xl select-none">{mentor.emoji}</span>
         <div>
           <p className="text-xs text-gray-400 uppercase tracking-widest font-semibold">
             Your guide
           </p>
-          <p className="text-sm font-bold text-gray-800">{mentor.name}</p>
+          <p className="text-sm font-bold text-[#1e3a52]">{mentor.name}</p>
         </div>
         {isFallback && (
-          <span className="ml-auto text-xs bg-amber-100 text-amber-700 px-2 py-1 rounded-full">
+          <span className="ml-auto text-xs bg-[#f0e8d8] text-[#b8860b] font-semibold px-2 py-1 rounded-full">
             Preview lesson
           </span>
         )}
@@ -127,7 +140,7 @@ export default function LessonClient({
       <main className="flex-1 overflow-y-auto">
         {/* Story card */}
         <div className="max-w-2xl mx-auto px-4 py-8">
-          <p className="text-xs font-bold uppercase tracking-widest text-indigo-500 mb-1">
+          <p className="text-xs font-bold uppercase tracking-widest text-[#b8860b] mb-1">
             Today&apos;s story
           </p>
           <h2 className="text-xl font-bold text-gray-900 mb-6">{lesson.title}</h2>
@@ -147,7 +160,7 @@ export default function LessonClient({
                   <button
                     key={c.choiceType}
                     onClick={() => pickChoice(c.choiceType)}
-                    className="text-left p-4 rounded-xl border-2 border-gray-200 hover:border-indigo-400 hover:bg-indigo-50 transition-all cursor-pointer text-sm font-medium text-gray-700"
+                    className="text-left p-4 rounded-xl border-2 border-gray-200 hover:border-[#1e3a52] hover:bg-[#f0e8d8] transition-all cursor-pointer text-sm font-medium text-gray-700"
                   >
                     {CHOICE_LABELS[c.choiceType]}
                   </button>
@@ -159,8 +172,8 @@ export default function LessonClient({
           {/* Phase: consequence */}
           {phase === "consequence" && consequence && (
             <div>
-              <div className="bg-indigo-50 rounded-2xl border border-indigo-100 p-6 mb-6">
-                <p className="text-xs font-bold uppercase tracking-widest text-indigo-400 mb-2">
+              <div className="bg-[#f0e8d8] rounded-2xl border border-[#e8dcc8] p-6 mb-6">
+                <p className="text-xs font-bold uppercase tracking-widest text-[#b8860b] mb-2">
                   What happened…
                 </p>
                 <p className="text-gray-700 leading-relaxed whitespace-pre-line text-sm sm:text-base">
@@ -169,7 +182,7 @@ export default function LessonClient({
               </div>
               <button
                 onClick={startChat}
-                className="w-full py-3 px-6 rounded-full bg-indigo-600 text-white font-semibold hover:bg-indigo-700 transition-colors cursor-pointer"
+                className="w-full py-3 px-6 rounded-full bg-[#1e3a52] text-white font-semibold hover:bg-[#162d3f] transition-colors cursor-pointer"
               >
                 Reflect with {mentor.name} →
               </button>
@@ -198,7 +211,7 @@ export default function LessonClient({
                         "rounded-2xl px-4 py-3 text-sm leading-relaxed max-w-sm",
                         m.role === "assistant"
                           ? "bg-white border border-gray-100 text-gray-700"
-                          : "bg-indigo-600 text-white",
+                          : "bg-[#1e3a52] text-white",
                       ].join(" ")}
                     >
                       {m.content}
@@ -224,12 +237,12 @@ export default function LessonClient({
                   onChange={(e) => setInput(e.target.value)}
                   placeholder="Type your answer…"
                   disabled={sending}
-                  className="flex-1 rounded-full border border-gray-200 px-4 py-2 text-sm focus:outline-none focus:border-indigo-400 disabled:opacity-50"
+                  className="flex-1 rounded-full border border-gray-200 px-4 py-2 text-sm focus:outline-none focus:border-[#1e3a52] disabled:opacity-50"
                 />
                 <button
                   type="submit"
                   disabled={sending || !input.trim()}
-                  className="px-5 py-2 rounded-full bg-indigo-600 text-white text-sm font-semibold hover:bg-indigo-700 disabled:opacity-40 transition-colors cursor-pointer"
+                  className="px-5 py-2 rounded-full bg-[#1e3a52] text-white text-sm font-semibold hover:bg-[#162d3f] disabled:opacity-40 transition-colors cursor-pointer"
                 >
                   Send
                 </button>

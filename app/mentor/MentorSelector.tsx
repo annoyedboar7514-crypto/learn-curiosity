@@ -1,6 +1,7 @@
 "use client";
 
 import { useSearchParams, useRouter } from "next/navigation";
+import Image from "next/image";
 import { mentorCharacters } from "@/lib/mentor/mentor-characters";
 
 export default function MentorSelector() {
@@ -13,12 +14,27 @@ export default function MentorSelector() {
   }
 
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center px-4 py-12 bg-white">
+    <div className="min-h-screen flex flex-col items-center justify-center px-4 py-12 bg-[#faf9f7]">
       <div className="max-w-2xl w-full text-center">
-        <p className="text-xs font-bold uppercase tracking-widest text-indigo-500 mb-1">
+
+        {/* Brand header */}
+        <div className="flex justify-center mb-8">
+          <div className="relative w-[120px] h-[90px]">
+            <Image
+              src="/brand/Logo.png"
+              alt="Learn Curiosity"
+              fill
+              sizes="120px"
+              className="object-contain"
+              priority
+            />
+          </div>
+        </div>
+
+        <p className="text-xs font-bold uppercase tracking-widest text-[#b8860b] mb-2">
           Step 2 of 2
         </p>
-        <h1 className="text-3xl font-bold text-gray-900 mb-2">
+        <h1 className="text-3xl font-bold text-[#1e3a52] mb-2">
           Choose your guide
         </h1>
         <p className="text-gray-400 text-sm mb-10">
@@ -30,14 +46,14 @@ export default function MentorSelector() {
             <button
               key={m.id}
               onClick={() => choose(m.id)}
-              className="flex flex-col items-center gap-3 p-6 rounded-2xl border-2 border-gray-200 hover:border-indigo-400 hover:bg-indigo-50 transition-all cursor-pointer text-center group"
+              className="flex flex-col items-center gap-3 p-6 rounded-2xl border-2 border-[#f0e8d8] bg-white hover:border-[#1e3a52] hover:bg-[#f0e8d8] transition-all cursor-pointer text-center group"
             >
               <span className="text-6xl select-none group-hover:scale-110 transition-transform">
                 {m.emoji}
               </span>
               <div>
-                <p className="font-bold text-gray-900 text-lg">{m.name}</p>
-                <p className="text-xs text-indigo-500 font-semibold uppercase tracking-wide mb-2">
+                <p className="font-bold text-[#1e3a52] text-lg">{m.name}</p>
+                <p className="text-xs text-[#b8860b] font-semibold uppercase tracking-wide mb-2">
                   {m.title}
                 </p>
                 <p className="text-sm text-gray-500 leading-snug">{m.description}</p>
