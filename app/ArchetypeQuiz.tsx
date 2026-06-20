@@ -79,11 +79,11 @@ export default function ArchetypeQuiz() {
                   headers: { "Content-Type": "application/json" },
                   body: JSON.stringify({ field: "archetype", value: result }),
                 }).catch(() => {/* anonymous — ok to fail silently */});
-                router.push(`/mentor?archetype=${result}`);
+                router.push(`/home`);
               }}
               className={`px-8 py-3 rounded-full text-white font-semibold transition-colors cursor-pointer ${r.accentColor} opacity-90 hover:opacity-100`}
             >
-              Start learning →
+              Go to my dashboard →
             </button>
           </div>
         </div>
