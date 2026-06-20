@@ -112,13 +112,23 @@ export default function LessonClient({
     <div className="min-h-screen flex flex-col bg-[#faf9f7]">
       {/* Top bar */}
       <header className="bg-white border-b border-[#f0e8d8] px-4 py-3 flex items-center gap-3">
+        {/* Exit button */}
+        <Link
+          href="/home"
+          className="shrink-0 w-8 h-8 flex items-center justify-center rounded-full hover:bg-gray-100 transition-colors text-gray-400 hover:text-gray-700"
+          title="Exit lesson"
+        >
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M19 12H5M12 5l-7 7 7 7" />
+          </svg>
+        </Link>
         {/* Brand logo */}
-        <div className="relative w-[40px] h-[30px] shrink-0">
+        <div className="relative w-[36px] h-[27px] shrink-0">
           <Image
             src="/brand/Logo.png"
             alt="Learn Curiosity"
             fill
-            sizes="40px"
+            sizes="36px"
             className="object-contain"
           />
         </div>
@@ -249,18 +259,26 @@ export default function LessonClient({
                 </button>
               </form>
 
-              {/* Progress link — appears after 2 full exchanges */}
+              {/* Finish links — appear after 2 full exchanges */}
               {chatMessages.length >= 4 && (
-                <div className="mt-6 pt-5 border-t border-gray-100 flex flex-col items-center gap-2">
-                  <p className="text-xs text-gray-400 font-body">
-                    Great thinking — you earned sparks for this reflection.
+                <div className="mt-6 pt-5 border-t border-gray-100 flex flex-col items-center gap-3">
+                  <p className="text-xs text-gray-400 text-center">
+                    Great thinking — you earned sparks for this reflection!
                   </p>
-                  <Link
-                    href="/student"
-                    className="px-6 py-2.5 rounded-full border-2 border-[#1e3a52] text-[#1e3a52] text-sm font-semibold hover:bg-[#1e3a52] hover:text-white transition-all"
-                  >
-                    ⭐ See your progress
-                  </Link>
+                  <div className="flex gap-3 flex-wrap justify-center">
+                    <Link
+                      href="/home"
+                      className="px-6 py-2.5 rounded-full bg-[#1e3a52] text-white text-sm font-semibold hover:bg-[#162d3f] transition-all"
+                    >
+                      🏠 Back to Home
+                    </Link>
+                    <Link
+                      href="/student"
+                      className="px-6 py-2.5 rounded-full border-2 border-[#1e3a52] text-[#1e3a52] text-sm font-semibold hover:bg-[#1e3a52] hover:text-white transition-all"
+                    >
+                      ⭐ See my sparks
+                    </Link>
+                  </div>
                 </div>
               )}
             </div>

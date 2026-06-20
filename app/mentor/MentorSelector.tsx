@@ -15,7 +15,7 @@ export default function MentorSelector() {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ field: "mentor_id", value: mentorId }),
     }).catch(() => {/* anonymous — ok to fail silently */});
-    router.push(`/lesson?archetype=${archetype}&mentor=${mentorId}`);
+    router.push(`/home`);
   }
 
   return (
