@@ -57,7 +57,7 @@ export default async function DashboardPage() {
             <span className="text-xs font-mono-brand uppercase tracking-widest text-brass">
               Parent Dashboard
             </span>
-            <Link href="/quiz" className="text-sm font-body text-navy/60 hover:text-navy transition-colors">
+            <Link href="/home" className="text-sm font-body text-navy/60 hover:text-navy transition-colors">
               ← Back to app
             </Link>
           </div>
@@ -160,7 +160,7 @@ function EmptyState() {
         Sessions appear here after your child completes the reflection phase of a lesson.
       </p>
       <Link
-        href="/quiz"
+        href="/home"
         className="inline-block px-6 py-3 rounded-full bg-teal text-cream font-semibold font-body text-sm hover:bg-teal/90 transition-colors"
       >
         Start a session

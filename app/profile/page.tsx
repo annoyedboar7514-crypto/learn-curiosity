@@ -7,12 +7,12 @@ import { getMentorCharacter } from "@/lib/mentor/mentor-characters";
 import { BottomNav } from "@/app/components/BottomNav";
 
 const ARCHETYPE_META: Record<string, { label: string; icon: string }> = {
-  explorer:  { label: "The Explorer",        icon: "🗺️"  },
-  astronaut: { label: "The Astronaut",        icon: "🚀"  },
-  detective: { label: "The Detective",        icon: "🔍"  },
-  inventor:  { label: "The Inventor/Builder", icon: "🔧"  },
-  artist:    { label: "The Artist",           icon: "🎨"  },
-  doctor:    { label: "The Doctor/Healer",    icon: "🩺"  },
+  "explorer":         { label: "The Explorer",        icon: "🗺️" },
+  "astronaut":        { label: "The Astronaut",        icon: "🚀" },
+  "detective":        { label: "The Detective",        icon: "🔍" },
+  "inventor-builder": { label: "The Inventor/Builder", icon: "🔧" },
+  "artist":           { label: "The Artist",           icon: "🎨" },
+  "doctor-healer":    { label: "The Doctor/Healer",    icon: "🩺" },
 };
 
 const GRADE_LABELS: Record<string, string> = {

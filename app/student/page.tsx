@@ -33,7 +33,7 @@ export default async function StudentPage() {
             <span className="font-serif font-semibold text-navy text-lg">LearnCuriosity</span>
           </Link>
           <Link
-            href="/quiz"
+            href="/home"
             className="px-4 py-2 rounded-full bg-teal text-cream text-sm font-semibold font-body hover:bg-teal/90 transition-colors"
           >
             New lesson →
@@ -178,7 +178,7 @@ export default async function StudentPage() {
               Complete your first lesson to earn sparks and discover your rank.
             </p>
             <Link
-              href="/quiz"
+              href="/home"
               className="inline-block px-8 py-3 rounded-full bg-teal text-cream font-semibold font-body hover:bg-teal/90 transition-colors"
             >
               Start your first lesson →
@@ -187,7 +187,7 @@ export default async function StudentPage() {
         ) : (
           <div className="text-center">
             <Link
-              href="/quiz"
+              href="/home"
               className="inline-block px-8 py-3 rounded-full bg-teal text-cream font-semibold font-body hover:bg-teal/90 transition-colors"
             >
               Explore another lesson →
