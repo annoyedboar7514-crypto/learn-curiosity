@@ -1,4 +1,4 @@
-import { auth } from "@clerk/nextjs/server";
+import { cookies } from "next/headers";
 import { sql } from "./db/index";
 
 export interface ChildProfile {
@@ -9,20 +9,19 @@ export interface ChildProfile {
   mentorId: string | null;
 }
 
-export async function getClerkUserId(): Promise<string | null> {
-  const { userId } = await auth();
-  return userId;
+export async function getChildProfileId(): Promise<string | null> {
+  const store = await cookies();
+  return store.get("lc_child_id")?.value ?? null;
 }
 
 export async function getChildProfile(): Promise<ChildProfile | null> {
-  const userId = await getClerkUserId();
-  if (!userId) return null;
+  const id = await getChildProfileId();
+  if (!id) return null;
 
   const [row] = await sql`
     SELECT id, nickname, grade_band, archetype, mentor_id
     FROM child_profiles
-    WHERE clerk_user_id = ${userId}
-    ORDER BY created_at ASC LIMIT 1
+    WHERE id = ${id}
   `;
 
   if (!row) return null;
@@ -34,9 +33,4 @@ export async function getChildProfile(): Promise<ChildProfile | null> {
     archetype: row.archetype ? String(row.archetype) : null,
     mentorId:  row.mentor_id ? String(row.mentor_id) : null,
   };
-}
-
-export async function getChildProfileId(): Promise<string | null> {
-  const profile = await getChildProfile();
-  return profile?.id ?? null;
 }
