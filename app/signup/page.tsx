@@ -8,7 +8,7 @@ export default function SignupPage() {
 
   return (
     <SignupFlow
-      onStartQuiz={() => router.push("/quiz")}
+      onStartQuiz={() => router.push("/home")}
     />
   );
 }

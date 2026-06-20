@@ -2,6 +2,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { getProgress } from "@/lib/db/progress";
 import { getChildProfileId } from "@/lib/session";
+import { BottomNav } from "@/app/components/BottomNav";
 
 const ALL_PILLARS: { id: string; label: string; icon: string; color: string }[] = [
   { id: "critical-thinking",       label: "Critical Thinking",          icon: "🧠", color: "bg-indigo-100 border-indigo-300 text-indigo-700" },
@@ -21,7 +22,7 @@ export default async function StudentPage() {
     : null;
 
   return (
-    <div className="min-h-screen bg-cream">
+    <div className="min-h-screen bg-cream pb-24">
       {/* Header */}
       <header className="bg-cream border-b border-parchment sticky top-0 z-50">
         <div className="max-w-2xl mx-auto px-6 h-16 flex items-center justify-between">
@@ -195,6 +196,7 @@ export default async function StudentPage() {
         )}
 
       </main>
+      <BottomNav />
     </div>
   );
 }
