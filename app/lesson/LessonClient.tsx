@@ -109,20 +109,30 @@ export default function LessonClient({
   }
 
   return (
-    <div className="min-h-screen flex flex-col bg-[#faf9f7]">
-      {/* Exit banner — always visible, full width */}
-      <div className="bg-[#1e3a52] px-4 py-2 flex items-center justify-between">
-        <span className="text-white/60 text-xs font-semibold uppercase tracking-widest">Lesson in progress</span>
-        <Link
-          href="/home"
-          className="flex items-center gap-1.5 bg-white text-[#1e3a52] font-bold text-xs px-4 py-2 rounded-full hover:bg-gray-100 transition-colors"
-        >
-          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
-            <path d="M19 12H5M12 5l-7 7 7 7" />
-          </svg>
-          Leave lesson
-        </Link>
-      </div>
+    <div className="min-h-screen flex flex-col bg-[#faf9f7] pb-20">
+      {/* Floating exit button — fixed to screen, always visible */}
+      <Link
+        href="/home"
+        style={{
+          position: "fixed",
+          bottom: 24,
+          right: 20,
+          zIndex: 9999,
+          display: "flex",
+          alignItems: "center",
+          gap: 8,
+          background: "#1e3a52",
+          color: "#fff",
+          fontWeight: 700,
+          fontSize: 14,
+          padding: "12px 20px",
+          borderRadius: 999,
+          boxShadow: "0 4px 20px rgba(0,0,0,0.25)",
+          textDecoration: "none",
+        }}
+      >
+        🏠 Leave Lesson
+      </Link>
       {/* Top bar */}
       <header className="bg-white border-b border-[#f0e8d8] px-4 py-3 flex items-center gap-3">
         {/* Brand logo */}
