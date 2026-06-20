@@ -110,18 +110,21 @@ export default function LessonClient({
 
   return (
     <div className="min-h-screen flex flex-col bg-[#faf9f7]">
-      {/* Top bar */}
-      <header className="bg-white border-b border-[#f0e8d8] px-4 py-3 flex items-center gap-3">
-        {/* Exit button */}
+      {/* Exit banner — always visible, full width */}
+      <div className="bg-[#1e3a52] px-4 py-2 flex items-center justify-between">
+        <span className="text-white/60 text-xs font-semibold uppercase tracking-widest">Lesson in progress</span>
         <Link
           href="/home"
-          className="shrink-0 flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-gray-100 hover:bg-gray-200 transition-colors text-gray-600 text-xs font-semibold"
+          className="flex items-center gap-1.5 bg-white text-[#1e3a52] font-bold text-xs px-4 py-2 rounded-full hover:bg-gray-100 transition-colors"
         >
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
             <path d="M19 12H5M12 5l-7 7 7 7" />
           </svg>
-          Exit
+          Leave lesson
         </Link>
+      </div>
+      {/* Top bar */}
+      <header className="bg-white border-b border-[#f0e8d8] px-4 py-3 flex items-center gap-3">
         {/* Brand logo */}
         <div className="relative w-[36px] h-[27px] shrink-0">
           <Image
