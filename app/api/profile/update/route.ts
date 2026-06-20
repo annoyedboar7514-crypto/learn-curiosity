@@ -1,11 +1,19 @@
 import { NextRequest, NextResponse } from "next/server";
+import { auth } from "@clerk/nextjs/server";
 import { sql } from "@/lib/db/index";
 
 export async function PATCH(req: NextRequest) {
-  const childId = req.cookies.get("lc_child_id")?.value;
-  if (!childId) {
+  const { userId } = await auth();
+  if (!userId) {
     return NextResponse.json({ error: "Not signed in" }, { status: 401 });
   }
+
+  // Resolve the child profile id from the Clerk user
+  const [profile] = await sql`SELECT id FROM child_profiles WHERE clerk_user_id = ${userId} LIMIT 1`;
+  if (!profile) {
+    return NextResponse.json({ error: "No profile found" }, { status: 404 });
+  }
+  const childId = String(profile.id);
 
   const { field, value } = await req.json() as { field: string; value: string };
 
