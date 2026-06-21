@@ -10,6 +10,7 @@ interface Props {
   childName: string
   mentorName: string
   choiceLabel: string
+  sessionId: string
   onComplete: (data: { messages: Message[]; questionCount: number }) => void
 }
 
@@ -19,7 +20,7 @@ const MENTOR_EMOJI: Record<string, string> = {
   grade56: '🦉',
 }
 
-export function Phase4Mentor({ lesson, gradeBand, childName, mentorName, choiceLabel, onComplete }: Props) {
+export function Phase4Mentor({ lesson, gradeBand, childName, mentorName, choiceLabel, sessionId, onComplete }: Props) {
   const qBank = lesson.questionBanks?.[gradeBand]
   const openingText = qBank
     ? `You chose to ${choiceLabel.toLowerCase()}. ${qBank.entry}`
@@ -53,6 +54,7 @@ export function Phase4Mentor({ lesson, gradeBand, childName, mentorName, choiceL
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
+          sessionId,
           lessonId: lesson.id, lessonTitle: lesson.title,
           pillar: lesson.pillar, gradeBand, childName, mentorName,
           choiceLabel, questionBank: qBank, history, questionCount,

@@ -1,6 +1,6 @@
 'use client'
 import { useRouter } from 'next/navigation'
-import { LessonShell } from '@/app/components/lesson/LessonShell'
+import { LessonShell, type SessionComplete } from '@/app/components/lesson/LessonShell'
 import type { Lesson, GradeBand } from '@/lib/content/lessonSchema'
 
 interface Props {
@@ -14,8 +14,22 @@ interface Props {
 export function LessonPageClient({ lesson, gradeBand, childName, mentorName, archetype }: Props) {
   const router = useRouter()
 
-  const handleComplete = (sessionData: { messages: { role: string; text: string }[]; questionCount: number }) => {
-    console.log('[lesson-complete]', lesson.id, sessionData.questionCount, 'exchanges')
+  const handleComplete = (data: SessionComplete) => {
+    // Fire-and-forget — never block navigation on the DB write
+    fetch('/api/lessons/complete', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        sessionId:      data.sessionId,
+        lessonId:       data.lessonId,
+        level:          data.level,
+        decisionAnswer: data.decisionAnswer,
+        durationMs:     data.durationMs,
+        startedAt:      data.startedAt,
+        userTurns:      data.questionCount,
+      }),
+    }).catch(() => {/* non-fatal */})
+
     router.push('/home')
   }
 

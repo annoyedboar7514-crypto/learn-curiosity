@@ -1,5 +1,5 @@
 'use client'
-import { useState } from 'react'
+import { useState, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import type { Lesson, GradeBand } from '@/lib/content/lessonSchema'
 import { Phase1Video } from './Phase1Video'
@@ -7,13 +7,25 @@ import { Phase2Decision } from './Phase2Decision'
 import { Phase3Consequence } from './Phase3Consequence'
 import { Phase4Mentor } from './Phase4Mentor'
 
+export interface SessionComplete {
+  messages: { role: string; text: string }[]
+  questionCount: number
+  sessionId: string
+  lessonId: string
+  level: number | null
+  pillar: string | undefined
+  startedAt: number   // Unix seconds
+  durationMs: number
+  decisionAnswer: string
+}
+
 interface Props {
   lesson: Partial<Lesson>
   gradeBand: GradeBand
   childName: string
   mentorName: string
   archetype: string
-  onComplete: (sessionData: { messages: { role: string; text: string }[]; questionCount: number }) => void
+  onComplete: (data: SessionComplete) => void
 }
 
 const STEPS = [
@@ -26,7 +38,25 @@ const STEPS = [
 export function LessonShell({ lesson, gradeBand, childName, mentorName, archetype, onComplete }: Props) {
   const [phase, setPhase] = useState(0)
   const [choiceLabel, setChoiceLabel] = useState('')
+
+  // stable session identity
+  const sessionId = useRef(`lc-${lesson.id ?? 0}-${Date.now()}`).current
+  const startedAt = useRef(Math.floor(Date.now() / 1000)).current
+
   const router = useRouter()
+
+  const handleComplete = (data: { messages: { role: string; text: string }[]; questionCount: number }) => {
+    onComplete({
+      ...data,
+      sessionId,
+      lessonId: String(lesson.id ?? ''),
+      level: lesson.id ?? null,
+      pillar: lesson.pillar,
+      startedAt,
+      durationMs: (Math.floor(Date.now() / 1000) - startedAt) * 1000,
+      decisionAnswer: choiceLabel,
+    })
+  }
 
   return (
     <div className="lc-lesson" data-archetype={archetype}>
@@ -104,7 +134,8 @@ export function LessonShell({ lesson, gradeBand, childName, mentorName, archetyp
               childName={childName}
               mentorName={mentorName}
               choiceLabel={choiceLabel}
-              onComplete={onComplete}
+              sessionId={sessionId}
+              onComplete={handleComplete}
             />
           )}
         </div>

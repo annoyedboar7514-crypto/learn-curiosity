@@ -40,5 +40,21 @@ export function getLessonForArchetype(
 }
 
 export function getLessonById(id: string): Lesson | null {
-  return allLessons.find((l) => l.id === id) ?? null;
+  // Try old archetype-based registry first
+  const found = allLessons.find((l) => l.id === id);
+  if (found) return found;
+
+  // Fall back to new numeric-ID levels (for the parent report title lookup)
+  const numId = parseInt(id, 10);
+  if (!isNaN(numId)) {
+    try {
+      // eslint-disable-next-line @typescript-eslint/no-require-imports
+      const { getLevelById } = require("@/lib/content/levels/all100Levels");
+      const level = getLevelById(numId);
+      if (level?.title) {
+        return { id, title: level.title, pillar: level.pillar ?? "critical" } as unknown as Lesson;
+      }
+    } catch { /* non-fatal */ }
+  }
+  return null;
 }

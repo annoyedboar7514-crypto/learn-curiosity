@@ -55,4 +55,53 @@ export async function runMigrations() {
   await sql`ALTER TABLE coppa_consent    ALTER COLUMN consented_at TYPE BIGINT USING consented_at::BIGINT`.catch(() => {});
   await sql`ALTER TABLE child_profiles   ALTER COLUMN created_at TYPE BIGINT USING created_at::BIGINT`.catch(() => {});
   await sql`ALTER TABLE messages         ALTER COLUMN created_at TYPE BIGINT USING created_at::BIGINT`.catch(() => {});
+
+  // Clerk linkage columns (the live app keys child/consent rows by clerk_user_id)
+  await sql`ALTER TABLE child_profiles ADD COLUMN IF NOT EXISTS clerk_user_id TEXT`.catch(() => {});
+  await sql`ALTER TABLE coppa_consent  ADD COLUMN IF NOT EXISTS clerk_user_id TEXT`.catch(() => {});
+  await sql`CREATE UNIQUE INDEX IF NOT EXISTS child_profiles_clerk_user_unique ON child_profiles(clerk_user_id)`.catch(() => {});
+
+  // ---- Quiz baseline results (the graded report shown to parents) ----
+  await sql`
+    CREATE TABLE IF NOT EXISTS quiz_results (
+      id               TEXT PRIMARY KEY,
+      clerk_user_id    TEXT,
+      child_profile_id TEXT,
+      archetype        TEXT NOT NULL,
+      grade_band       TEXT NOT NULL,
+      pillar_ct        INTEGER NOT NULL DEFAULT 0,
+      pillar_res       INTEGER NOT NULL DEFAULT 0,
+      pillar_cre       INTEGER NOT NULL DEFAULT 0,
+      pillar_com       INTEGER NOT NULL DEFAULT 0,
+      pillar_learn     INTEGER NOT NULL DEFAULT 0,
+      answers          JSONB,
+      duration_ms      BIGINT NOT NULL DEFAULT 0,
+      completed_at     BIGINT NOT NULL DEFAULT extract(epoch from now())::BIGINT
+    )
+  `;
+  await sql`CREATE UNIQUE INDEX IF NOT EXISTS quiz_results_clerk_user_unique ON quiz_results(clerk_user_id)`.catch(() => {});
+  await sql`CREATE INDEX IF NOT EXISTS idx_quiz_results_child ON quiz_results(child_profile_id)`.catch(() => {});
+
+  // ---- Lesson session metadata (duration, decision, pillar gain, flags) ----
+  // The full chat transcript itself lives in `messages`; this is the per-session
+  // metadata layer the parent report enriches transcripts with.
+  await sql`
+    CREATE TABLE IF NOT EXISTS lesson_sessions (
+      session_id       TEXT PRIMARY KEY,
+      clerk_user_id    TEXT,
+      child_profile_id TEXT,
+      lesson_id        TEXT NOT NULL,
+      level            INTEGER,
+      pillar           TEXT,
+      pillar_gain      INTEGER NOT NULL DEFAULT 0,
+      decision_answer  TEXT,
+      duration_ms      BIGINT NOT NULL DEFAULT 0,
+      started_at       BIGINT NOT NULL DEFAULT extract(epoch from now())::BIGINT,
+      ended_at         BIGINT,
+      flags            JSONB,
+      created_at       BIGINT NOT NULL DEFAULT extract(epoch from now())::BIGINT
+    )
+  `;
+  await sql`CREATE INDEX IF NOT EXISTS idx_lesson_sessions_child ON lesson_sessions(child_profile_id)`.catch(() => {});
+  await sql`CREATE INDEX IF NOT EXISTS idx_lesson_sessions_clerk ON lesson_sessions(clerk_user_id)`.catch(() => {});
 }

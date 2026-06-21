@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import Anthropic from "@anthropic-ai/sdk";
 import type { GradeBand, LessonPillar, QuestionBank } from "@/lib/content/lessonSchema";
+import { logMessage } from "@/lib/db/index";
+import { getChildProfileId } from "@/lib/session";
 
 const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
 
@@ -71,6 +73,8 @@ export async function POST(req: NextRequest) {
   try {
     const body = await req.json()
     const {
+      sessionId,
+      lessonId,
       lessonTitle,
       pillar,
       gradeBand = "grade34",
@@ -81,6 +85,8 @@ export async function POST(req: NextRequest) {
       history = [],
       questionCount = 0,
     }: {
+      sessionId?: string
+      lessonId?: number | string
       lessonTitle?: string
       pillar?: LessonPillar
       gradeBand?: GradeBand
@@ -121,13 +127,26 @@ export async function POST(req: NextRequest) {
         ? response.content[0].text.trim()
         : questionBank?.disengagement ?? "Tell me more about that."
 
-    // Log escalation marker but don't expose it to the client payload
     const isEscalation = text.startsWith("[ESCALATE]")
     const cleanText = isEscalation ? text.replace("[ESCALATE]", "").trim() : text
 
-    // In production, an [ESCALATE] response should trigger a parent alert
     if (isEscalation) {
-      console.warn(`[MENTOR-ESCALATE] lessonId=${body.lessonId} childName=${childName}`)
+      console.warn(`[MENTOR-ESCALATE] lessonId=${lessonId} childName=${childName}`)
+    }
+
+    // Log messages to DB so parent dashboard can show transcripts.
+    // Fire-and-forget — never block the response on logging.
+    if (sessionId && lessonId != null) {
+      const sid = String(sessionId)
+      const lid = String(lessonId)
+      getChildProfileId().then(childProfileId => {
+        const lastMsg = history[history.length - 1]
+        if (lastMsg?.role === "user") {
+          logMessage({ sessionId: sid, childProfileId, lessonId: lid, role: "user", content: lastMsg.content }).catch(() => {})
+        }
+        // Store raw text so parent report can detect [ESCALATE] prefix
+        logMessage({ sessionId: sid, childProfileId, lessonId: lid, role: "assistant", content: text }).catch(() => {})
+      }).catch(() => {})
     }
 
     return NextResponse.json({

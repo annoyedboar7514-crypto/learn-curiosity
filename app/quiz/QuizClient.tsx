@@ -30,7 +30,7 @@ interface Question {
   s: string; q: string; cols: number; cards: Card[];
   intro?: string; p?: string | string[]; t?: number;
 }
-interface Answer { arch: string | null; p: string | string[] | null; sc: number; text: string; }
+interface Answer { arch: string | null; p: string | string[] | null; sc: number; text: string; q?: string; choice?: string; }
 interface Result  { arch: string; pillars: Record<string, number>; }
 
 const SCENE_ORB: Record<string, [string, string, string, string]> = {
@@ -143,6 +143,7 @@ export default function QuizClient({ initialGrade = "grade34", nickname = "Explo
   const [result, setResult] = useState<Result | null>(null);
   const [saving, setSaving] = useState(false);
   const particlesRef = useRef<HTMLDivElement>(null);
+  const startRef = useRef<number>(Date.now());   // quiz start time, for duration
 
   const questions = QUIZ[grade];
   const Q = questions[idx];
@@ -171,6 +172,7 @@ export default function QuizClient({ initialGrade = "grade34", nickname = "Explo
   // Restart
   const restart = useCallback((g: Grade) => {
     setGrade(g); setIdx(0); setAnswers([]); setPicked(null); setMoreText(""); setPhase("quiz");
+    startRef.current = Date.now();
   }, []);
 
   // Pick a card
@@ -180,7 +182,7 @@ export default function QuizClient({ initialGrade = "grade34", nickname = "Explo
   function advance() {
     if (picked === null) return;
     const card = Q.cards[picked];
-    const newAnswer: Answer = { arch: card.a ?? null, p: Q.p ?? null, sc: card.sc ?? 0, text: moreText };
+    const newAnswer: Answer = { arch: card.a ?? null, p: Q.p ?? null, sc: card.sc ?? 0, text: moreText, q: Q.q, choice: card.l };
     const newAnswers = [...answers, newAnswer];
     setAnswers(newAnswers);
     setPicked(null); setMoreText("");
@@ -204,6 +206,21 @@ export default function QuizClient({ initialGrade = "grade34", nickname = "Explo
   function finish(finalAnswers: Answer[]) {
     setResult(scoreAnswers(finalAnswers));
     setPhase("reveal");
+    // Persist the graded baseline so the parent dashboard can report on it.
+    // Fire-and-forget: the reveal shows regardless of network result.
+    const gbMap: Record<Grade, string> = { k2: "K-2", grade34: "3-4", grade56: "5-6" };
+    const payload = {
+      gradeBand: gbMap[grade],
+      durationMs: Date.now() - startRef.current,
+      answers: finalAnswers.map((a) => ({
+        q: a.q, choice: a.choice, arch: a.arch, pillar: a.p, score: a.sc, text: a.text,
+      })),
+    };
+    fetch("/api/quiz/result", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
+    }).catch(() => { /* non-fatal */ });
   }
 
   // Save archetype and go to /home
