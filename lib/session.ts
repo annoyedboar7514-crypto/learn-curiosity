@@ -19,12 +19,17 @@ export async function getChildProfile(): Promise<ChildProfile | null> {
   try { ({ userId } = await auth()); } catch { return null; }
   if (!userId) return null;
 
-  const [row] = await sql`
-    SELECT id, nickname, grade_band, archetype, mentor_id
-    FROM child_profiles
-    WHERE clerk_user_id = ${userId}
-    ORDER BY created_at ASC LIMIT 1
-  `;
+  let row: Record<string, unknown> | undefined;
+  try {
+    [row] = await sql`
+      SELECT id, nickname, grade_band, archetype, mentor_id
+      FROM child_profiles
+      WHERE clerk_user_id = ${userId}
+      ORDER BY created_at ASC LIMIT 1
+    `;
+  } catch {
+    return null;
+  }
 
   if (!row) return null;
 
