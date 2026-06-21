@@ -3,8 +3,8 @@
 import Image from "next/image";
 import Link from "next/link";
 import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import { SignOutButton } from "@clerk/nextjs";
-import { LevelModal } from "@/app/components/LevelModal";
 import { ERAS, LEVELS, type Pillar } from "@/lib/content/levels";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -165,7 +165,7 @@ function Ring({ done, total }: { done: number; total: number }) {
 
 export default function HomeClient({ profile }: { profile: HomeProfile }) {
   const [tab, setTab] = useState<"home" | "progress">("home");
-  const [lessonOpen, setLessonOpen] = useState(false);
+  const router = useRouter();
 
   const cssArch = CSS_ARCH[profile.archetype] ?? "explorer";
   const mentor = MENTOR_DATA[profile.archetype] ?? MENTOR_DATA["explorer"];
@@ -242,7 +242,7 @@ export default function HomeClient({ profile }: { profile: HomeProfile }) {
             </div>
 
             {/* Big START button */}
-            <button className="start" onClick={() => setLessonOpen(true)}>
+            <button className="start" onClick={() => router.push(`/lesson/${profile.currentLevelId}`)}>
               <span className="spark">✦</span>
               <span className="spark2">⭐</span>
               <div className="start-play">
@@ -408,7 +408,7 @@ export default function HomeClient({ profile }: { profile: HomeProfile }) {
                   Complete your first lesson to see progress here!
                 </p>
                 <button className="start" style={{ maxWidth: 360, margin: "20px auto 0" }}
-                  onClick={() => { setTab("home"); setTimeout(() => setLessonOpen(true), 100); }}>
+                  onClick={() => router.push('/lesson/1')}>
                   <div className="start-play" style={{ width: 52, height: 52 }}>
                     <svg viewBox="0 0 24 24" fill="currentColor" style={{ width: 22, height: 22, marginLeft: 3 }}>
                       <path d="M8 5v14l11-7z" />
@@ -426,15 +426,6 @@ export default function HomeClient({ profile }: { profile: HomeProfile }) {
         </div>
 
       </div>
-
-      {/* Lesson modal — opens when Start button is tapped */}
-      {lessonOpen && currentLevel && (
-        <LevelModal
-          level={currentLevel}
-          onClose={() => setLessonOpen(false)}
-          onLevelComplete={() => setLessonOpen(false)}
-        />
-      )}
 
     </div>
   );
