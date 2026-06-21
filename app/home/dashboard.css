@@ -101,7 +101,7 @@ body[data-archetype="detective"]{--accent:#7A2D3C;--accent-soft:rgba(122,45,60,.
 .pillars-row{display:grid;grid-template-columns:repeat(5,1fr);gap:14px;}
 .pcard{background:#fff;border:3px solid var(--border);border-radius:var(--r-lg);padding:16px 14px;text-align:center;box-shadow:var(--sh-sm);transition:transform .12s,border-color .12s;}
 .pcard:hover{transform:translateY(-4px);border-color:var(--pillar);}
-.picon{width:52px;height:52px;border-radius:16px;margin:0 auto 10px;display:grid;place-items:center;background:color-mix(in srgb,var(--pillar) 16%,#fff);color:var(--pillar);}
+.picon{width:52px;height:52px;border-radius:16px;margin:0 auto 10px;display:grid;place-items:center;background:rgba(255,255,255,0.7);color:var(--pillar);border:2px solid var(--pillar);}
 .picon svg{width:28px;height:28px;}
 .pcard .pname{font-weight:500;font-size:13px;line-height:1.25;}
 .pcard .pcount{font-size:11px;opacity:.6;margin-top:3px;}
