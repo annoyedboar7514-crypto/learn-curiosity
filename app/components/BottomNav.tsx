@@ -15,7 +15,7 @@ const NAV = [
     ),
   },
   {
-    href: "/quiz",
+    href: "/home",
     label: "Lesson",
     icon: (active: boolean) => (
       <svg width="24" height="24" viewBox="0 0 24 24" fill={active ? "currentColor" : "none"}
