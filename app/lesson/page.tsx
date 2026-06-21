@@ -1,3 +1,5 @@
+export const dynamic = "force-dynamic";
+
 import { redirect } from "next/navigation";
 import { getLessonForArchetype } from "@/lib/content/lesson-registry";
 import { getMentorCharacter } from "@/lib/mentor/mentor-characters";
