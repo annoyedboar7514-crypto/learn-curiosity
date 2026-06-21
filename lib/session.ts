@@ -1,4 +1,4 @@
-import { cookies } from "next/headers";
+import { auth } from "@clerk/nextjs/server";
 import { sql } from "./db/index";
 
 export interface ChildProfile {
@@ -10,18 +10,19 @@ export interface ChildProfile {
 }
 
 export async function getChildProfileId(): Promise<string | null> {
-  const store = await cookies();
-  return store.get("lc_child_id")?.value ?? null;
+  const profile = await getChildProfile();
+  return profile?.id ?? null;
 }
 
 export async function getChildProfile(): Promise<ChildProfile | null> {
-  const id = await getChildProfileId();
-  if (!id) return null;
+  const { userId } = await auth();
+  if (!userId) return null;
 
   const [row] = await sql`
     SELECT id, nickname, grade_band, archetype, mentor_id
     FROM child_profiles
-    WHERE id = ${id}
+    WHERE clerk_user_id = ${userId}
+    ORDER BY created_at ASC LIMIT 1
   `;
 
   if (!row) return null;

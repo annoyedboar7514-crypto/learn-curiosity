@@ -1,9 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
+import { auth } from "@clerk/nextjs/server";
 import { sql } from "@/lib/db/index";
 
 export async function PATCH(req: NextRequest) {
-  const childId = req.cookies.get("lc_child_id")?.value;
-  if (!childId) {
+  const { userId } = await auth();
+  if (!userId) {
     return NextResponse.json({ error: "Not signed in" }, { status: 401 });
   }
 
@@ -24,9 +25,9 @@ export async function PATCH(req: NextRequest) {
   }
 
   if (field === "archetype") {
-    await sql`UPDATE child_profiles SET archetype = ${value} WHERE id = ${childId}`;
+    await sql`UPDATE child_profiles SET archetype = ${value} WHERE clerk_user_id = ${userId}`;
   } else if (field === "mentor_id") {
-    await sql`UPDATE child_profiles SET mentor_id = ${value} WHERE id = ${childId}`;
+    await sql`UPDATE child_profiles SET mentor_id = ${value} WHERE clerk_user_id = ${userId}`;
   } else {
     return NextResponse.json({ error: "Invalid field" }, { status: 400 });
   }
