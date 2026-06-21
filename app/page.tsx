@@ -35,7 +35,8 @@ function IconShieldCheck() {
 }
 
 export default async function HomePage() {
-  const { userId } = await auth();
+  let userId: string | null = null;
+  try { ({ userId } = await auth()); } catch { /* Clerk middleware not active */ }
   if (userId) redirect("/dashboard");
 
   return (

@@ -7,7 +7,8 @@ import Link from "next/link";
 import Image from "next/image";
 
 export default async function DashboardPage() {
-  const { userId } = await auth();
+  let userId: string | null = null;
+  try { ({ userId } = await auth()); } catch { /* Clerk middleware not active */ }
   if (!userId) redirect("/login");
 
   return (
