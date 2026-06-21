@@ -35,7 +35,7 @@ export default function CompleteSignupPage() {
       });
       const data = await res.json();
       if (!res.ok) { setError(data.error ?? "Something went wrong."); return; }
-      router.push("/quiz");
+      router.push("/dashboard");
     } catch {
       setError("Something went wrong. Please try again.");
     } finally {

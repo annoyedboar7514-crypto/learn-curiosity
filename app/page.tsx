@@ -1,3 +1,7 @@
+export const dynamic = "force-dynamic";
+
+import { auth } from "@clerk/nextjs/server";
+import { redirect } from "next/navigation";
 import Image from "next/image";
 import Link from "next/link";
 import StickyHeader from "./components/StickyHeader";
@@ -30,7 +34,10 @@ function IconShieldCheck() {
   );
 }
 
-export default function HomePage() {
+export default async function HomePage() {
+  const { userId } = await auth();
+  if (userId) redirect("/dashboard");
+
   return (
     <>
       <StickyHeader />
