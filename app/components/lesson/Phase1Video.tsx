@@ -4,109 +4,130 @@ import type { Lesson } from '@/lib/content/lessonSchema'
 
 interface Props {
   lesson: Partial<Lesson>
+  archetype: string
   onComplete: () => void
 }
 
+// Deterministic positions — no Math.random (SSR safe)
+const PARTICLES = Array.from({ length: 18 }, (_, i) => ({
+  left:  `${(i * 14 + 7)  % 98}%`,
+  bottom:`${(i * 9  + 3)  % 28}%`,
+  size:  `${(i % 3) * 3   + 4}px`,
+  delay: `${(i * 0.35)    % 5}s`,
+  dur:   `${(i % 4) * 1.5 + 4}s`,
+}))
+
 export function Phase1Video({ lesson, onComplete }: Props) {
-  const [pauseAnswered, setPauseAnswered] = useState(false)
+  const [watched, setWatched] = useState(false)
   const [selectedPause, setSelectedPause] = useState<number | null>(null)
-  const hasPausePoint = lesson.pausePoint1Question && lesson.pausePoint1Cards?.length
+  const [pauseAnswered, setPauseAnswered] = useState(false)
+
+  const hasPause = !!(lesson.pausePoint1Question && lesson.pausePoint1Cards?.length)
+  const readyToProceed = !hasPause || pauseAnswered
 
   return (
-    <div className="flex flex-col gap-4">
-      {/* Historical context ticker */}
-      <div
-        className="rounded-2xl p-5"
-        style={{ background: 'rgba(27,110,107,0.06)', border: '1px solid rgba(27,110,107,0.15)' }}
-      >
-        <div className="flex items-center gap-2 mb-3">
-          <span className="text-lg">📍</span>
-          <span className="font-mono text-xs uppercase tracking-wide" style={{ color: '#1B6E6B' }}>
-            {lesson.historicalPeriod}
-          </span>
+    <>
+      {/* ── Cinematic video hero ── */}
+      <div className="lc-video-hero">
+        <div className="lc-particles" aria-hidden="true">
+          {PARTICLES.map((p, i) => (
+            <div
+              key={i}
+              className="lc-particle"
+              style={{ left: p.left, bottom: p.bottom, width: p.size, height: p.size, animationDelay: p.delay, animationDuration: p.dur }}
+            />
+          ))}
         </div>
-        <p className="text-sm leading-relaxed" style={{ color: '#233137' }}>
-          {lesson.historicalContext}
-        </p>
-      </div>
 
-      {/* Video placeholder */}
-      <div
-        className="rounded-2xl flex flex-col items-center justify-center gap-3 py-12"
-        style={{ background: '#1a2744', minHeight: '180px' }}
-      >
-        <div
-          className="w-16 h-16 rounded-full flex items-center justify-center text-3xl"
-          style={{ background: 'rgba(232,163,61,0.2)', border: '2px solid rgba(232,163,61,0.4)' }}
-        >
-          🎬
-        </div>
-        <p className="text-sm font-medium" style={{ color: 'rgba(251,246,236,0.7)' }}>
-          Story video coming soon
-        </p>
-        <p className="text-xs" style={{ color: 'rgba(251,246,236,0.4)' }}>
-          {lesson.title}
-        </p>
-      </div>
-
-      {/* Pause point question (if available) */}
-      {hasPausePoint && !pauseAnswered && (
-        <div
-          className="rounded-2xl p-5"
-          style={{ background: '#FBF6EC', border: '1px solid #E3DCC8' }}
-        >
-          <div className="flex items-center gap-2 mb-3">
-            <span className="text-lg">⏸</span>
-            <span className="font-mono text-xs uppercase tracking-wide" style={{ color: '#E8A33D' }}>
-              Pause &amp; Think
-            </span>
-          </div>
-          <p className="font-semibold text-sm mb-4" style={{ color: '#233137', fontFamily: "'Fraunces', Georgia, serif" }}>
-            {lesson.pausePoint1Question}
-          </p>
-          <div className="grid grid-cols-2 gap-2">
-            {lesson.pausePoint1Cards!.map((card, i) => (
-              <button
-                key={i}
-                onClick={() => setSelectedPause(i)}
-                className="p-3 rounded-xl text-left transition-all text-sm"
-                style={{
-                  background: selectedPause === i ? 'rgba(27,110,107,0.1)' : '#fff',
-                  border: selectedPause === i ? '2px solid #1B6E6B' : '2px solid #E3DCC8',
-                  color: '#233137',
-                }}
-              >
-                <span className="text-lg block mb-1">{card.emoji}</span>
-                {card.label}
-              </button>
-            ))}
-          </div>
-          {selectedPause !== null && (
-            <button
-              onClick={() => setPauseAnswered(true)}
-              className="w-full mt-3 py-2 rounded-xl text-sm font-semibold transition-all"
-              style={{ background: '#1B6E6B', color: '#FBF6EC' }}
-            >
-              Continue watching →
-            </button>
+        <div className="lc-play-zone">
+          {!watched ? (
+            <>
+              <p className="lc-play-label">Watch the Story</p>
+              <div className="lc-play-ring-wrap">
+                <div className="lc-play-ring1" aria-hidden="true" />
+                <div className="lc-play-ring2" aria-hidden="true" />
+                <button
+                  className="lc-play-btn"
+                  onClick={() => setWatched(true)}
+                  aria-label="Play story"
+                >
+                  <svg width="28" height="28" viewBox="0 0 24 24" fill="currentColor" style={{ marginLeft: 4 }}>
+                    <path d="M8 5v14l11-7z" />
+                  </svg>
+                </button>
+              </div>
+            </>
+          ) : (
+            <div className="lc-watching-badge">
+              <div className="lc-watching-dot" aria-hidden="true" />
+              Story is playing · scroll down
+            </div>
           )}
         </div>
-      )}
 
-      {/* Continue button */}
-      {(!hasPausePoint || pauseAnswered) && (
-        <button
-          onClick={onComplete}
-          className="w-full py-4 rounded-2xl font-semibold text-base transition-all"
-          style={{
-            background: '#E8A33D',
-            color: '#412402',
-            boxShadow: '0 4px 0 #C9852A',
-          }}
-        >
-          Make my choice →
-        </button>
+        <div className="lc-hero-overlay">
+          <div className="lc-era-pill">
+            <span className="lc-era-dot" aria-hidden="true" />
+            Era {lesson.era} · {lesson.historicalPeriod}
+          </div>
+          <h1 className="lc-hero-title">{lesson.title}</h1>
+          <p className="lc-hero-period">📍 {lesson.historicalPeriod}</p>
+        </div>
+      </div>
+
+      {/* ── Below the hero — revealed after play ── */}
+      {watched && (
+        <>
+          {/* Historical context */}
+          <div className="lc-history-card">
+            <div className="lc-history-label">
+              <span>🌍</span>
+              Historical Context
+            </div>
+            <p className="lc-history-text">
+              {lesson.historicalContext ?? 'Setting the scene...'}
+            </p>
+          </div>
+
+          {/* Optional pause-point question */}
+          {hasPause && !pauseAnswered && (
+            <div className="lc-pause-card">
+              <div className="lc-pause-label">
+                <span>⏸</span>
+                Pause &amp; Think
+              </div>
+              <p className="lc-pause-q">{lesson.pausePoint1Question}</p>
+              <div className="lc-pause-grid">
+                {lesson.pausePoint1Cards!.map((card, i) => (
+                  <button
+                    key={i}
+                    className={`lc-pause-opt${selectedPause === i ? ' sel' : ''}`}
+                    onClick={() => setSelectedPause(i)}
+                  >
+                    <span className="lc-pause-opt-em">{card.emoji}</span>
+                    <span className="lc-pause-opt-lbl">{card.label}</span>
+                  </button>
+                ))}
+              </div>
+              {selectedPause !== null && (
+                <button className="lc-btn lc-btn-theme" onClick={() => setPauseAnswered(true)}>
+                  Continue →
+                </button>
+              )}
+            </div>
+          )}
+
+          {/* CTA */}
+          {readyToProceed && (
+            <div className="lc-video-cta">
+              <button className="lc-btn lc-btn-gold" onClick={onComplete}>
+                I&apos;m ready to make my choice
+                <span className="lc-btn-arrow">→</span>
+              </button>
+            </div>
+          )}
+        </>
       )}
-    </div>
+    </>
   )
 }

@@ -13,6 +13,12 @@ interface Props {
   onComplete: (data: { messages: Message[]; questionCount: number }) => void
 }
 
+const MENTOR_EMOJI: Record<string, string> = {
+  k2: '🌟',
+  grade34: '🔭',
+  grade56: '🦉',
+}
+
 export function Phase4Mentor({ lesson, gradeBand, childName, mentorName, choiceLabel, onComplete }: Props) {
   const qBank = lesson.questionBanks?.[gradeBand]
   const openingText = qBank
@@ -27,7 +33,7 @@ export function Phase4Mentor({ lesson, gradeBand, childName, mentorName, choiceL
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' })
-  }, [messages])
+  }, [messages, isThinking])
 
   const sendMessage = async () => {
     if (!input.trim() || isThinking) return
@@ -47,113 +53,100 @@ export function Phase4Mentor({ lesson, gradeBand, childName, mentorName, choiceL
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          lessonId: lesson.id,
-          lessonTitle: lesson.title,
-          pillar: lesson.pillar,
-          gradeBand,
-          childName,
-          mentorName,
-          choiceLabel,
-          questionBank: qBank,
-          history,
-          questionCount,
+          lessonId: lesson.id, lessonTitle: lesson.title,
+          pillar: lesson.pillar, gradeBand, childName, mentorName,
+          choiceLabel, questionBank: qBank, history, questionCount,
         }),
       })
       const data = await res.json()
-      setMessages(prev => [...prev, { role: 'mentor', text: data.response ?? qBank?.disengagement ?? "Tell me more about that." }])
+      setMessages(prev => [...prev, { role: 'mentor', text: data.response ?? qBank?.disengagement ?? 'Tell me more about that.' }])
       setQuestionCount(q => q + 1)
     } catch {
-      setMessages(prev => [...prev, { role: 'mentor', text: qBank?.disengagement ?? "Tell me more — what made you think of that?" }])
+      setMessages(prev => [...prev, { role: 'mentor', text: qBank?.disengagement ?? 'Tell me more — what made you think of that?' }])
     }
     setIsThinking(false)
   }
 
   const isComplete = questionCount >= 3
-
-  const inputPlaceholder = gradeBand === 'k2' ? 'What do you think?' : 'Type your thoughts...'
+  const progress = Math.min(questionCount, 3)
 
   return (
-    <div className="rounded-2xl overflow-hidden mb-5" style={{ border: '1px solid #E3DCC8', background: '#fff' }}>
-      {/* Header */}
-      <div className="flex items-center gap-3 p-4" style={{ borderBottom: '1px solid #E3DCC8' }}>
-        <div
-          className="w-9 h-9 rounded-full flex items-center justify-center text-lg flex-shrink-0"
-          style={{ background: 'linear-gradient(135deg, #1B6E6B, rgba(27,110,107,0.7))' }}
-        >
-          🌟
-        </div>
-        <div>
-          <p className="font-semibold text-sm" style={{ color: '#233137' }}>{mentorName}</p>
-          <p className="text-xs font-mono" style={{ color: '#1B6E6B' }}>● thinking with you</p>
-        </div>
-      </div>
-
-      {/* Messages */}
-      <div className="p-4 flex flex-col gap-3 overflow-y-auto" style={{ maxHeight: '280px' }}>
-        {messages.map((m, i) => (
-          <div key={i} className={`flex ${m.role === 'child' ? 'justify-end' : 'justify-start'}`}>
-            <div
-              className="max-w-xs px-4 py-2.5 rounded-2xl text-sm leading-relaxed"
-              style={
-                m.role === 'mentor'
-                  ? { background: 'rgba(27,110,107,0.08)', border: '1px solid rgba(27,110,107,0.15)', borderBottomLeftRadius: '4px', color: '#233137' }
-                  : { background: '#1B6E6B', color: '#FBF6EC', borderBottomRightRadius: '4px' }
-              }
-            >
-              {m.text}
+    <div className="lc-phase-in">
+      <div className="lc-mentor-card">
+        {/* Header */}
+        <div className="lc-mentor-header">
+          <div className="lc-mentor-avatar">{MENTOR_EMOJI[gradeBand] ?? '🌟'}</div>
+          <div>
+            <div className="lc-mentor-name">{mentorName}</div>
+            <div className="lc-mentor-status">● thinking with you</div>
+          </div>
+          <div className="lc-mentor-progress">
+            <div className="lc-mp-label">{progress}/3 exchanges</div>
+            <div className="lc-mp-bar">
+              <div className="lc-mp-fill" style={{ width: `${(progress / 3) * 100}%` }} />
             </div>
           </div>
-        ))}
-        {isThinking && (
-          <div className="flex justify-start">
+        </div>
+
+        {/* Messages */}
+        <div className="lc-messages">
+          {messages.map((m, i) => (
             <div
-              className="px-4 py-2.5 rounded-2xl text-sm"
-              style={{ background: 'rgba(27,110,107,0.08)', border: '1px solid rgba(27,110,107,0.15)', borderBottomLeftRadius: '4px', color: 'rgba(27,110,107,0.6)' }}
+              key={i}
+              className={`lc-msg ${m.role === 'mentor' ? 'lc-msg-mentor' : 'lc-msg-child'}`}
             >
-              thinking...
+              <div className="lc-bubble">{m.text}</div>
             </div>
-          </div>
-        )}
-        <div ref={bottomRef} />
-      </div>
+          ))}
+          {isThinking && (
+            <div className="lc-msg lc-thinking">
+              <div className="lc-bubble">
+                <div className="lc-dots">
+                  <span className="lc-dot" />
+                  <span className="lc-dot" />
+                  <span className="lc-dot" />
+                </div>
+              </div>
+            </div>
+          )}
+          <div ref={bottomRef} />
+        </div>
 
-      {/* Input */}
-      <div className="p-3 flex gap-2" style={{ borderTop: '1px solid #E3DCC8' }}>
-        <input
-          className="flex-1 rounded-lg px-3 py-2 text-sm outline-none transition-all"
-          style={{ border: '1px solid #E3DCC8', background: '#FBF6EC', color: '#233137' }}
-          placeholder={inputPlaceholder}
-          value={input}
-          onChange={e => setInput(e.target.value)}
-          onKeyDown={e => e.key === 'Enter' && !e.shiftKey && sendMessage()}
-          onFocus={e => (e.target.style.borderColor = '#1B6E6B')}
-          onBlur={e => (e.target.style.borderColor = '#E3DCC8')}
-        />
-        <button
-          onClick={sendMessage}
-          disabled={!input.trim() || isThinking}
-          className="w-9 h-9 rounded-lg flex items-center justify-center text-white transition-all flex-shrink-0"
-          style={{ background: input.trim() && !isThinking ? '#1B6E6B' : '#E3DCC8' }}
-        >
-          ↑
-        </button>
-      </div>
-
-      {/* Complete */}
-      {isComplete && (
-        <div className="p-4" style={{ borderTop: '1px solid #E3DCC8' }}>
-          <p className="text-xs text-center mb-3 italic" style={{ color: '#9CA3AF' }}>
-            {lesson.mentorClosing}
-          </p>
+        {/* Input */}
+        <div className="lc-input-row">
+          <textarea
+            className="lc-input"
+            placeholder={gradeBand === 'k2' ? 'What do you think?' : 'Type your thoughts...'}
+            value={input}
+            onChange={e => setInput(e.target.value)}
+            onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMessage() } }}
+            rows={1}
+          />
           <button
-            onClick={() => onComplete({ messages, questionCount })}
-            className="w-full py-3 rounded-xl font-semibold text-sm transition-all"
-            style={{ background: '#1B6E6B', color: '#FBF6EC' }}
+            className="lc-send"
+            disabled={!input.trim() || isThinking}
+            onClick={sendMessage}
+            aria-label="Send"
           >
-            Complete this level ✦
+            ↑
           </button>
         </div>
-      )}
+
+        {/* Complete */}
+        {isComplete && (
+          <div className="lc-complete-zone">
+            {lesson.mentorClosing && (
+              <p className="lc-closing-txt">{lesson.mentorClosing}</p>
+            )}
+            <button
+              className="lc-btn lc-btn-gold"
+              onClick={() => onComplete({ messages, questionCount })}
+            >
+              Complete this level ✦
+            </button>
+          </div>
+        )}
+      </div>
     </div>
   )
 }

@@ -8,13 +8,13 @@ interface Props {
   gradeBand: GradeBand
   childName: string
   mentorName: string
+  archetype: string
 }
 
-export function LessonPageClient({ lesson, gradeBand, childName, mentorName }: Props) {
+export function LessonPageClient({ lesson, gradeBand, childName, mentorName, archetype }: Props) {
   const router = useRouter()
 
   const handleComplete = (sessionData: { messages: { role: string; text: string }[]; questionCount: number }) => {
-    // Future: POST session data to /api/session/complete
     console.log('[lesson-complete]', lesson.id, sessionData.questionCount, 'exchanges')
     router.push('/home')
   }
@@ -25,6 +25,7 @@ export function LessonPageClient({ lesson, gradeBand, childName, mentorName }: P
       gradeBand={gradeBand}
       childName={childName}
       mentorName={mentorName}
+      archetype={archetype}
       onComplete={handleComplete}
     />
   )

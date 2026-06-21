@@ -36,6 +36,7 @@ export default async function LessonByIdPage({
   const gradeBand: GradeBand = GRADE_MAP[profile?.gradeBand ?? ""] ?? "k2";
   const mentorId = profile?.mentorId ?? "luna";
   const childName = profile?.nickname ?? "Explorer";
+  const archetype = profile?.archetype ?? "explorer";
 
   let mentorName = "Luna";
   try {
@@ -49,6 +50,7 @@ export default async function LessonByIdPage({
       gradeBand={gradeBand}
       childName={childName}
       mentorName={mentorName}
+      archetype={archetype}
     />
   );
 }

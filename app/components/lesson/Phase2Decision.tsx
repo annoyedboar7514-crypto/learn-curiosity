@@ -2,6 +2,14 @@
 import { useState } from 'react'
 import type { Lesson, GradeBand } from '@/lib/content/lessonSchema'
 
+const PILLAR_STYLES: Record<string, { bg: string; color: string; label: string }> = {
+  critical:      { bg: '#EEF0F8', color: '#5B6FA8', label: '🔍 Critical Thinking' },
+  resilience:    { bg: '#EDF3EF', color: '#4F8B6E', label: '🛡 Resilience' },
+  creativity:    { bg: '#F3EEF8', color: '#8B5FA3', label: '✨ Creativity' },
+  communication: { bg: '#FDF0EB', color: '#D9714F', label: '💬 Communication' },
+  learning:      { bg: '#FDF5E8', color: '#C98A3E', label: '🧠 Learning How to Learn' },
+}
+
 interface Props {
   lesson: Partial<Lesson>
   gradeBand: GradeBand
@@ -11,56 +19,44 @@ interface Props {
 export function Phase2Decision({ lesson, onComplete }: Props) {
   const [selected, setSelected] = useState<number | null>(null)
   const cards = lesson.decisionCards ?? []
-  const gridCols = cards.length <= 2 ? 'grid-cols-1' : cards.length === 3 ? 'grid-cols-3' : 'grid-cols-2'
+  const gridClass = cards.length <= 2 ? 'c2' : cards.length === 3 ? 'c3' : 'c4'
+  const pillar = lesson.pillar ? PILLAR_STYLES[lesson.pillar] : null
 
   return (
-    <div className="flex flex-col gap-4">
-      <div
-        className="rounded-2xl p-5"
-        style={{ background: '#FBF6EC', border: '1px solid #E3DCC8' }}
-      >
-        <p
-          className="font-semibold text-lg leading-snug"
-          style={{ color: '#233137', fontFamily: "'Fraunces', Georgia, serif" }}
-        >
-          {lesson.decisionQuestion ?? 'What would you do?'}
-        </p>
-      </div>
+    <div className="lc-phase-in">
+      {pillar && (
+        <div className="lc-pillar-tag" style={{ background: pillar.bg, color: pillar.color }}>
+          {pillar.label}
+        </div>
+      )}
 
-      <div className={`grid ${gridCols} gap-3`}>
+      <p className="lc-question">
+        {lesson.decisionQuestion ?? 'What would you do?'}
+      </p>
+
+      <div className={`lc-cards ${gridClass}${selected !== null ? ' has-pick' : ''}`}>
         {cards.map((card, i) => (
           <button
             key={i}
+            className={`lc-card${selected === i ? ' selected' : ''}`}
             onClick={() => setSelected(i)}
-            className="p-4 rounded-2xl flex flex-col items-center gap-2 text-center transition-all"
-            style={{
-              background: selected === i ? 'rgba(27,110,107,0.08)' : '#fff',
-              border: selected === i ? '3px solid #1B6E6B' : '2px solid #E3DCC8',
-              boxShadow: selected === i ? '0 0 0 4px rgba(27,110,107,0.12)' : '0 2px 8px rgba(35,49,55,0.06)',
-              transform: selected === i ? 'translateY(-2px)' : 'none',
-            }}
           >
-            <span className="text-3xl">{card.emoji}</span>
-            <span className="text-sm font-medium" style={{ color: '#233137' }}>{card.label}</span>
+            <span className="lc-card-em">{card.emoji}</span>
+            <span className="lc-card-lbl">{card.label}</span>
           </button>
         ))}
       </div>
 
       <button
+        className="lc-btn lc-btn-gold"
         disabled={selected === null}
         onClick={() => {
           if (selected === null) return
           onComplete(selected, cards[selected]?.label ?? '')
         }}
-        className="w-full py-4 rounded-2xl font-semibold text-base transition-all"
-        style={{
-          background: selected !== null ? '#E8A33D' : '#E3DCC8',
-          color: selected !== null ? '#412402' : '#9CA3AF',
-          boxShadow: selected !== null ? '0 4px 0 #C9852A' : 'none',
-          cursor: selected !== null ? 'pointer' : 'not-allowed',
-        }}
       >
-        {selected === null ? 'Pick one to continue' : 'See what happens →'}
+        {selected === null ? 'Pick one to continue' : 'See what happens'}
+        {selected !== null && <span className="lc-btn-arrow">→</span>}
       </button>
     </div>
   )
