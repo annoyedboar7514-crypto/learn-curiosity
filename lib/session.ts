@@ -15,7 +15,8 @@ export async function getChildProfileId(): Promise<string | null> {
 }
 
 export async function getChildProfile(): Promise<ChildProfile | null> {
-  const { userId } = await auth();
+  let userId: string | null = null;
+  try { ({ userId } = await auth()); } catch { return null; }
   if (!userId) return null;
 
   const [row] = await sql`
