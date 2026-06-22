@@ -23,8 +23,8 @@ export default async function HomePage() {
 
   const profile = await getChildProfile();
 
-  // Quiz is mandatory before the home hub is accessible
-  if (!profile?.archetype) redirect("/quiz");
+  // No profile yet — new user hasn't completed the onboarding form
+  if (!profile) redirect("/signup/complete");
 
   const archKey   = profile.archetype ?? "explorer";
   const gradeBand = (["K-2", "3-4", "5-6"].includes(profile?.gradeBand ?? "")
@@ -61,7 +61,7 @@ export default async function HomePage() {
 
   return (
     <HomeClient profile={{
-      nickname:        profile?.nickname ?? "Explorer",
+      nickname:        profile.nickname,
       gradeBand,
       archetype:       archKey,
       archetypeEmoji:  ARCHETYPE_EMOJI[archKey] ?? "🧭",
@@ -69,6 +69,7 @@ export default async function HomePage() {
       currentLevelId,
       xp,
       streakDays:      0,
+      quizPending:     !profile.archetype,
     }} />
   );
 }

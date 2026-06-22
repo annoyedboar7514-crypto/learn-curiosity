@@ -37,7 +37,13 @@ function IconShieldCheck() {
 export default async function HomePage() {
   let userId: string | null = null;
   try { ({ userId } = await auth()); } catch { /* Clerk middleware not active */ }
-  if (userId) redirect("/home");
+
+  if (userId) {
+    // If the user has no child profile yet (just signed up), go to onboarding
+    const { getChildProfile } = await import("@/lib/session");
+    const profile = await getChildProfile();
+    redirect(profile ? "/home" : "/signup/complete");
+  }
 
   return (
     <>

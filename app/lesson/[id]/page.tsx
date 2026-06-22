@@ -33,10 +33,6 @@ export default async function LessonByIdPage({
   if (!userId) redirect("/login");
 
   const profile = await getChildProfile();
-
-  // Quiz must be completed before any lesson is accessible
-  if (!profile?.archetype) redirect("/quiz");
-
   const gradeBand: GradeBand = GRADE_MAP[profile?.gradeBand ?? ""] ?? "k2";
   const mentorId = profile?.mentorId ?? "luna";
   const childName = profile?.nickname ?? "Explorer";

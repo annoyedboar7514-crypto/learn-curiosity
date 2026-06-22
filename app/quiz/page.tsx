@@ -1,6 +1,9 @@
 export const dynamic = "force-dynamic";
 
 import { auth } from "@clerk/nextjs/server";
+import { redirect } from "next/navigation";
+import Image from "next/image";
+import Link from "next/link";
 import { getChildProfile } from "@/lib/session";
 import QuizClient from "./QuizClient";
 import type { Grade } from "./QuizClient";
@@ -15,13 +18,39 @@ export default async function QuizPage() {
   let userId: string | null = null;
   try { ({ userId } = await auth()); } catch { /* Clerk not active */ }
 
-  const profile = userId ? await getChildProfile() : null;
+  // Unauthenticated users shouldn't land here — send them to sign up
+  if (!userId) redirect("/signup");
+
+  const profile = await getChildProfile();
   const initialGrade: Grade = GRADE_MAP[profile?.gradeBand ?? ""] ?? "grade34";
 
   return (
-    <QuizClient
-      initialGrade={initialGrade}
-      nickname={profile?.nickname ?? "Explorer"}
-    />
+    <>
+      {/* Logo link — always visible over the quiz background */}
+      <div style={{
+        position: "fixed", top: 14, left: 16, zIndex: 100,
+        display: "flex", alignItems: "center",
+      }}>
+        <Link
+          href="/"
+          style={{ display: "flex", alignItems: "center", gap: 8, textDecoration: "none" }}
+        >
+          <div style={{ position: "relative", width: 26, height: 20 }}>
+            <Image src="/brand/Logo.png" alt="Learn Curiosity" fill sizes="26px" style={{ objectFit: "contain" }} />
+          </div>
+          <span style={{
+            fontFamily: "Fraunces, Georgia, serif", fontWeight: 600, fontSize: 15,
+            color: "rgba(251,246,236,0.85)", textShadow: "0 1px 6px rgba(0,0,0,0.55)",
+          }}>
+            LearnCuriosity
+          </span>
+        </Link>
+      </div>
+
+      <QuizClient
+        initialGrade={initialGrade}
+        nickname={profile?.nickname ?? "Explorer"}
+      />
+    </>
   );
 }

@@ -18,6 +18,7 @@ export interface HomeProfile {
   currentLevelId: number;
   xp: Record<Pillar, number>;
   streakDays: number;
+  quizPending?: boolean;    // true = quiz not yet taken
 }
 
 // ─── Static config ────────────────────────────────────────────────────────────
@@ -194,10 +195,10 @@ export default function HomeClient({ profile }: { profile: HomeProfile }) {
 
         {/* ── Top bar ── */}
         <div className="topbar">
-          <div className="brand">
+          <Link href="/" className="brand" style={{ textDecoration: "none", color: "inherit" }}>
             <Image src="/brand/Logo.png" alt="" width={44} height={44} className="mark" />
             <span className="wordmark">LearnCuriosity</span>
-          </div>
+          </Link>
 
           <div className="topbar-right">
             <div className="child-chip">
@@ -229,6 +230,36 @@ export default function HomeClient({ profile }: { profile: HomeProfile }) {
         {/* ════════════ HOME PANEL ════════════ */}
         <div className={`panel${tab === "home" ? " active" : ""}`} role="tabpanel">
           <div className="home">
+
+            {/* Quiz CTA — shown once until quiz is completed */}
+            {profile.quizPending && (
+              <div style={{
+                display: "flex", alignItems: "center", justifyContent: "space-between",
+                gap: 16, padding: "18px 22px",
+                background: "rgba(232,163,61,0.13)",
+                border: "2px solid var(--gold)",
+                borderRadius: "var(--r-lg)",
+              }}>
+                <div>
+                  <div className="eyebrow" style={{ color: "var(--gold)" }}>One more step</div>
+                  <div style={{ fontSize: 15, fontWeight: 600, color: "var(--charcoal)", marginTop: 4 }}>
+                    Take the 5-minute quiz to meet your mentor and unlock personalized lessons.
+                  </div>
+                </div>
+                <button
+                  onClick={() => router.push("/quiz")}
+                  style={{
+                    background: "var(--gold)", color: "var(--cta-text)",
+                    border: "none", borderRadius: "var(--r-full)", padding: "12px 22px",
+                    fontWeight: 700, fontSize: 15, cursor: "pointer", whiteSpace: "nowrap",
+                    flexShrink: 0, fontFamily: "inherit",
+                    boxShadow: "0 4px 0 #c9852a",
+                  }}
+                >
+                  Take Quiz →
+                </button>
+              </div>
+            )}
 
             {/* Hero — mentor speech bubble */}
             <div className="hero">
