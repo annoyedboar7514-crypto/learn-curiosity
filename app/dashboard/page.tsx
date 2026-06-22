@@ -31,6 +31,9 @@ export default async function DashboardPage() {
           <span className="font-serif font-semibold text-navy text-lg leading-none">LearnCuriosity</span>
         </Link>
         <div className="flex items-center gap-3">
+          <Link href="/home" className="text-sm font-medium text-teal hover:text-teal/80 px-3 py-2 flex items-center gap-1.5">
+            ← Child Home
+          </Link>
           <Link href="/profile" className="text-sm text-navy/60 hover:text-navy px-3 py-2">Profile</Link>
           <SignOutButton redirectUrl="/">
             <button className="text-sm text-navy/60 hover:text-navy border border-[#E3DCC8] px-4 py-2 rounded-lg transition-colors cursor-pointer bg-transparent">

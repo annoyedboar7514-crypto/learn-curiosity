@@ -162,8 +162,11 @@ export default function CompleteSignupPage() {
                 border: "none", borderRadius: radius.sm, cursor: loading ? "not-allowed" : "pointer",
               }}
             >
-              {loading ? "Saving…" : "Find my child's mentor →"}
+              {loading ? "Saving…" : "Next: take the quiz →"}
             </button>
+            <p style={{ textAlign: "center", fontFamily: fonts.base, fontSize: 12, color: colors.gray, marginTop: 10 }}>
+              A quick 5-minute quiz to find your child&apos;s mentor — required before lessons unlock.
+            </p>
           </form>
         </div>
       </div>

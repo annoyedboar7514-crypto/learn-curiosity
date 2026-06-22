@@ -23,7 +23,10 @@ export default async function HomePage() {
 
   const profile = await getChildProfile();
 
-  const archKey   = profile?.archetype ?? "explorer";
+  // Quiz is mandatory before the home hub is accessible
+  if (!profile?.archetype) redirect("/quiz");
+
+  const archKey   = profile.archetype ?? "explorer";
   const gradeBand = (["K-2", "3-4", "5-6"].includes(profile?.gradeBand ?? "")
     ? profile!.gradeBand
     : "K-2") as "K-2" | "3-4" | "5-6";

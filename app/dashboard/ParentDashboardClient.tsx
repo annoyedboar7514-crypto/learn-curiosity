@@ -58,7 +58,7 @@ export default function ParentDashboardClient({ report }: { report: ParentReport
   return (
     <main className="max-w-5xl mx-auto px-5 sm:px-8 py-8 pb-24">
       {/* Heading */}
-      <p className="font-mono text-[11px] tracking-widest uppercase text-teal mb-2">Parent dashboard · private</p>
+      <p className="font-mono-brand text-[11px] tracking-widest uppercase text-teal mb-2">Parent dashboard · private</p>
       <h1 className="font-serif text-3xl font-semibold text-navy mb-1">{cap(name)}&apos;s journey</h1>
       <p className="text-navy/60 text-sm mb-6">
         {child ? `${gbLabel(child.gradeBand)}${child.archetype ? " · " + cap(child.archetype.replace("-", " ")) : ""}` : "Set up your child's profile to begin."}
@@ -75,9 +75,13 @@ export default function ParentDashboardClient({ report }: { report: ParentReport
         {NAV.map(([k, label]) => (
           <button
             key={k}
+            type="button"
             onClick={() => setTab(k)}
-            className={`text-sm font-medium px-4 py-2 rounded-full border transition-colors cursor-pointer ${
-              tab === k ? "bg-teal text-cream border-teal" : "bg-white text-navy border-[#E3DCC8] hover:border-teal"
+            aria-selected={tab === k}
+            className={`text-sm font-medium px-5 py-2.5 rounded-full border transition-colors cursor-pointer whitespace-nowrap ${
+              tab === k
+                ? "bg-teal text-cream border-teal shadow-sm"
+                : "bg-white text-navy border-[#E3DCC8] hover:border-teal hover:text-teal"
             }`}
           >
             {label}
@@ -89,12 +93,12 @@ export default function ParentDashboardClient({ report }: { report: ParentReport
       {tab === "overview" && (
         <div className="space-y-5">
           {/* tiles */}
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+          <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-3">
             {tiles.map(([n, l, s], i) => (
-              <div key={i} className="bg-white border border-[#E3DCC8] rounded-2xl p-4">
-                <div className="font-serif text-2xl font-semibold text-teal leading-tight">{n}</div>
-                <div className="text-[12.5px] text-navy/70 mt-1">{l}</div>
-                <div className="text-[11px] text-navy/45 mt-1.5">{s}</div>
+              <div key={i} className="bg-white border border-[#E3DCC8] rounded-2xl p-5 flex flex-col gap-1">
+                <div className="font-serif text-[28px] font-semibold text-teal leading-none">{n}</div>
+                <div className="text-[13px] font-medium text-navy/80 mt-1">{l}</div>
+                <div className="text-[12px] text-navy/50">{s}</div>
               </div>
             ))}
           </div>
@@ -156,7 +160,7 @@ export default function ParentDashboardClient({ report }: { report: ParentReport
                 </button>
                 {open.quiz && (
                   <div className="px-4 pb-4 border-t border-[#E3DCC8] pt-3">
-                    <p className="font-mono text-[10px] tracking-wider uppercase text-teal mb-2">Answers (private — never shown to your child)</p>
+                    <p className="font-mono-brand text-[10px] tracking-wider uppercase text-teal mb-2">Answers (private — never shown to your child)</p>
                     <div className="divide-y divide-dashed divide-[#E3DCC8]">
                       {report.quiz.answers.map((a, i) => (
                         <div key={i} className="flex justify-between gap-3 py-2 text-[13px]">
@@ -196,11 +200,11 @@ export default function ParentDashboardClient({ report }: { report: ParentReport
                   <div className="px-4 pb-4 border-t border-[#E3DCC8] pt-3">
                     {s.decisionAnswer && (
                       <div className="bg-cream border-l-[3px] border-[#E8A33D] rounded-r-lg px-3.5 py-3 mb-3 text-[14px] text-navy">
-                        <span className="block font-mono text-[10px] tracking-wider uppercase text-teal mb-1">{cap(name)}&apos;s decision</span>
+                        <span className="block font-mono-brand text-[10px] tracking-wider uppercase text-teal mb-1">{cap(name)}&apos;s decision</span>
                         “{s.decisionAnswer}”
                       </div>
                     )}
-                    <p className="font-mono text-[10px] tracking-wider uppercase text-teal mb-2">Mentor conversation — full transcript</p>
+                    <p className="font-mono-brand text-[10px] tracking-wider uppercase text-teal mb-2">Mentor conversation — full transcript</p>
                     <div className="flex flex-col gap-2.5">
                       {s.transcript.map((t, i) => (
                         <div key={i}
@@ -209,7 +213,7 @@ export default function ParentDashboardClient({ report }: { report: ParentReport
                                  ? "self-start bg-[#E1F5EE] text-navy rounded-bl-sm"
                                  : "self-end bg-teal text-[#E1F5EE] rounded-br-sm"
                              } ${t.escalated ? "ring-2 ring-[#C0392B]" : ""}`}>
-                          <span className="block font-mono text-[9px] uppercase tracking-wider opacity-70 mb-0.5">{t.role}</span>
+                          <span className="block font-mono-brand text-[9px] uppercase tracking-wider opacity-70 mb-0.5">{t.role}</span>
                           {t.text}
                         </div>
                       ))}
@@ -321,7 +325,7 @@ function SafetyCard({ mini, totalEscalations, redirects, name }: { mini?: boolea
       </div>
       {redirects.length > 0 && (
         <div className="mt-4">
-          <p className="font-mono text-[11px] tracking-wider uppercase text-teal">Gentle redirects ({redirects.length})</p>
+          <p className="font-mono-brand text-[11px] tracking-wider uppercase text-teal">Gentle redirects ({redirects.length})</p>
           <p className="text-[12.5px] text-navy/60 my-1.5">Times the mentor steered a curious tangent back to the lesson. Not a problem — just transparency.</p>
           {redirects.map((f, i) => (
             <div key={i} className="flex gap-3 py-2 border-t border-[#E3DCC8] text-[13px]">
