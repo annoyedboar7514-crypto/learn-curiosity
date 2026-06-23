@@ -104,4 +104,9 @@ export async function runMigrations() {
   `;
   await sql`CREATE INDEX IF NOT EXISTS idx_lesson_sessions_child ON lesson_sessions(child_profile_id)`.catch(() => {});
   await sql`CREATE INDEX IF NOT EXISTS idx_lesson_sessions_clerk ON lesson_sessions(clerk_user_id)`.catch(() => {});
+
+  // Drop the NOT NULL on parent_id — Clerk auth replaced the parent_accounts system
+  // and current code inserts without parent_id. Safe to run multiple times.
+  await sql`ALTER TABLE coppa_consent  ALTER COLUMN parent_id DROP NOT NULL`.catch(() => {});
+  await sql`ALTER TABLE child_profiles ALTER COLUMN parent_id DROP NOT NULL`.catch(() => {});
 }

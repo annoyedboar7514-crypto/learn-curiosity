@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
 import Link from "next/link";
+import { SignOutButton } from "@clerk/nextjs";
 import { colors, fonts, radius, shadow } from "@/lib/theme";
 
 type GradeBand = "K-2" | "3-4" | "5-6";
@@ -169,6 +170,15 @@ export default function CompleteSignupPage() {
             </p>
           </form>
         </div>
+
+        <p style={{ textAlign: "center", fontFamily: fonts.base, fontSize: 12, color: colors.gray, marginTop: 20 }}>
+          Wrong account?{" "}
+          <SignOutButton redirectUrl="/">
+            <button style={{ background: "none", border: "none", color: colors.teal, cursor: "pointer", fontSize: 12, padding: 0, fontFamily: fonts.base, textDecoration: "underline" }}>
+              Sign out
+            </button>
+          </SignOutButton>
+        </p>
       </div>
     </div>
   );

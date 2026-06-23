@@ -39,10 +39,13 @@ export default async function HomePage() {
   try { ({ userId } = await auth()); } catch { /* Clerk middleware not active */ }
 
   if (userId) {
-    // If the user has no child profile yet (just signed up), go to onboarding
+    // Returning user with a profile → go straight to the child hub
     const { getChildProfile } = await import("@/lib/session");
     const profile = await getChildProfile();
-    redirect(profile ? "/home" : "/signup/complete");
+    if (profile) redirect("/home");
+    // No profile yet (new user mid-onboarding, or profile save failed):
+    // show the marketing page so they're never stuck in a redirect loop.
+    // They can sign out via the header UserButton and try again.
   }
 
   return (
