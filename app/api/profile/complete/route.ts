@@ -2,6 +2,10 @@ import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@clerk/nextjs/server";
 import { sql } from "@/lib/db/index";
 import { randomUUID } from "crypto";
+import { ensureMigrations } from "@/lib/db/migrate";
+
+// Fire migrations on first request to this route (idempotent — safe to repeat).
+ensureMigrations();
 
 export async function POST(req: NextRequest) {
   const { userId } = await auth();

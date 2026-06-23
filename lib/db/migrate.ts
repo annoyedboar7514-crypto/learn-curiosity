@@ -1,5 +1,13 @@
 import { sql } from "./index";
 
+// Module-level singleton so migrations run once per serverless instance.
+// Safe to run multiple times — all statements use IF NOT EXISTS / IF EXISTS.
+let _migration: Promise<void> | null = null;
+export function ensureMigrations(): Promise<void> {
+  if (!_migration) _migration = runMigrations().catch((e) => { console.error("[migrate]", e); });
+  return _migration;
+}
+
 export async function runMigrations() {
   // Use BIGINT for timestamps to avoid 2038 overflow
   await sql`

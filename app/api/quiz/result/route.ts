@@ -3,6 +3,9 @@ import { auth } from "@clerk/nextjs/server";
 import { getChildProfileId } from "@/lib/session";
 import { saveQuizResult } from "@/lib/db/quiz-results";
 import { gradeQuiz, type QuizAnswer } from "@/lib/grading";
+import { ensureMigrations } from "@/lib/db/migrate";
+
+ensureMigrations();
 
 // POST /api/quiz/result
 // Body: { gradeBand: string, answers: QuizAnswer[], durationMs?: number }
