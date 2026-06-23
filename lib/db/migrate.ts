@@ -1,11 +1,15 @@
 import { sql } from "./index";
 
-// Module-level singleton so migrations run once per serverless instance.
-// Safe to run multiple times — all statements use IF NOT EXISTS / IF EXISTS.
+// Module-level singleton — runs once per serverless instance, retries on error.
 let _migration: Promise<void> | null = null;
 export function ensureMigrations(): Promise<void> {
-  if (!_migration) _migration = runMigrations().catch((e) => { console.error("[migrate]", e); });
-  return _migration;
+  if (!_migration) {
+    _migration = runMigrations().catch((e) => {
+      console.error("[migrate] failed, will retry next request:", e);
+      _migration = null; // allow retry on next request
+    });
+  }
+  return _migration!;
 }
 
 export async function runMigrations() {

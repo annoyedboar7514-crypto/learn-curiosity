@@ -4,10 +4,11 @@ import { sql } from "@/lib/db/index";
 import { randomUUID } from "crypto";
 import { ensureMigrations } from "@/lib/db/migrate";
 
-// Fire migrations on first request to this route (idempotent — safe to repeat).
-ensureMigrations();
-
 export async function POST(req: NextRequest) {
+  // Await migrations before any DB work — fixes parent_id NOT NULL and clerk_user_id column.
+  // Cached after first run so subsequent requests on the same instance are instant.
+  await ensureMigrations();
+
   const { userId } = await auth();
   if (!userId) {
     return NextResponse.json({ error: "Not signed in" }, { status: 401 });
@@ -26,20 +27,18 @@ export async function POST(req: NextRequest) {
   }
 
   try {
-    await sql.transaction([
-      sql`
-        INSERT INTO coppa_consent (id, clerk_user_id, agreed_to_terms, agreed_to_coppa, agreed_to_age)
-        VALUES (${randomUUID()}, ${userId}, 1, 1, 1)
-        ON CONFLICT DO NOTHING
-      `,
-      sql`
-        INSERT INTO child_profiles (id, clerk_user_id, nickname, grade_band)
-        VALUES (${randomUUID()}, ${userId}, ${nickname.trim()}, ${gradeBand})
-        ON CONFLICT (clerk_user_id) DO UPDATE
-          SET nickname = EXCLUDED.nickname, grade_band = EXCLUDED.grade_band
-      `,
-    ]);
-
+    // Use individual statements — more reliable than sql.transaction() on Neon HTTP mode.
+    await sql`
+      INSERT INTO coppa_consent (id, clerk_user_id, agreed_to_terms, agreed_to_coppa, agreed_to_age)
+      VALUES (${randomUUID()}, ${userId}, 1, 1, 1)
+      ON CONFLICT (id) DO NOTHING
+    `;
+    await sql`
+      INSERT INTO child_profiles (id, clerk_user_id, nickname, grade_band)
+      VALUES (${randomUUID()}, ${userId}, ${nickname.trim()}, ${gradeBand})
+      ON CONFLICT (clerk_user_id) DO UPDATE
+        SET nickname = EXCLUDED.nickname, grade_band = EXCLUDED.grade_band
+    `;
     return NextResponse.json({ success: true });
   } catch (err) {
     console.error("[profile/complete]", err);
