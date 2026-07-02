@@ -297,6 +297,49 @@ export default function HomeClient({ profile }: { profile: HomeProfile }) {
               <span className="start-go">Start →</span>
             </button>
 
+            {/* Chat with mentor CTA */}
+            <button
+              onClick={() => router.push("/chat")}
+              style={{
+                width: "100%",
+                padding: "18px 24px",
+                borderRadius: 16,
+                background: "linear-gradient(135deg, #1e293b 0%, #0f2027 100%)",
+                border: "1.5px solid rgba(255,255,255,0.12)",
+                color: "#fff",
+                display: "flex",
+                alignItems: "center",
+                gap: 16,
+                cursor: "pointer",
+                textAlign: "left",
+                marginBottom: 4,
+              }}
+            >
+              <div style={{
+                width: 48,
+                height: 48,
+                borderRadius: "50%",
+                background: "rgba(91,127,212,0.2)",
+                border: "1.5px solid rgba(91,127,212,0.5)",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                fontSize: 24,
+                flexShrink: 0,
+              }}>
+                🎙️
+              </div>
+              <div>
+                <div style={{ fontWeight: 700, fontSize: 16, marginBottom: 2 }}>
+                  Talk to your Mentor
+                </div>
+                <div style={{ fontSize: 13, opacity: 0.55 }}>
+                  Ask anything — voice or text, live conversation
+                </div>
+              </div>
+              <span style={{ marginLeft: "auto", opacity: 0.4, fontSize: 18 }}>→</span>
+            </button>
+
             {/* Mini level trail */}
             <div className="trail-card">
               <div className="hd">
