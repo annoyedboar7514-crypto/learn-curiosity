@@ -4,8 +4,11 @@ export interface MentorCharacter {
   emoji: string;
   title: string;
   description: string;
-  // Prepended to the age-banded system prompt to give this character its voice
   voiceNote: string;
+  // ElevenLabs voice ID — swap these for custom cloned voices in the dashboard
+  elevenLabsVoiceId: string;
+  // Tailwind/CSS accent color for the chat UI
+  color: string;
 }
 
 export const mentorCharacters: MentorCharacter[] = [
@@ -21,6 +24,8 @@ export const mentorCharacters: MentorCharacter[] = [
       "You often say 'I wonder…' and 'What if…?' You get genuinely excited when a " +
       "question opens into something bigger. You celebrate the process of thinking, " +
       "not just the answer.",
+    elevenLabsVoiceId: "EXAVITQu4vr4xnSDxMaL", // Bella — warm, curious female
+    color: "#5B7FD4",
   },
   {
     id: "rex",
@@ -34,6 +39,8 @@ export const mentorCharacters: MentorCharacter[] = [
       "like a new trail — you don't know what's around the next corner, and that's " +
       "exciting. You connect the story to real life using adventure metaphors. " +
       "You keep the energy up without rushing the child.",
+    elevenLabsVoiceId: "pNInz6obpgDQGcFmaJgB", // Adam — energetic male
+    color: "#E8833D",
   },
   {
     id: "sage",
@@ -47,6 +54,8 @@ export const mentorCharacters: MentorCharacter[] = [
       "slow down and notice their own thinking. You often say things like " +
       "'Let's sit with that for a moment' or 'What do you notice when you think about that?' " +
       "You speak in short, unhurried sentences.",
+    elevenLabsVoiceId: "ErXwobaYiN019PkySvjV", // Antoni — calm, measured male
+    color: "#5A9E7A",
   },
 ];
 

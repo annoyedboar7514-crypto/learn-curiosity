@@ -18,8 +18,8 @@ export default async function QuizPage() {
   let userId: string | null = null;
   try { ({ userId } = await auth()); } catch { /* Clerk not active */ }
 
-  // Unauthenticated users shouldn't land here — send them to sign up
-  if (!userId) redirect("/signup");
+  // Unauthenticated users shouldn't land here — send them to sign in
+  if (!userId) redirect("/login");
 
   const profile = await getChildProfile();
   const initialGrade: Grade = GRADE_MAP[profile?.gradeBand ?? ""] ?? "grade34";

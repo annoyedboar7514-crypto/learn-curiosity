@@ -10,18 +10,21 @@
   },
   "dependencies": {
     "@ai-sdk/anthropic": "^3.0.85",
+    "@ai-sdk/react": "^4.0.12",
     "@anthropic-ai/sdk": "^0.105.0",
     "@clerk/nextjs": "^7.5.6",
     "@neondatabase/serverless": "^1.1.0",
     "@types/uuid": "^10.0.0",
     "ai": "^6.0.208",
     "bcryptjs": "^3.0.3",
+    "elevenlabs": "^1.59.0",
     "next": "16.2.9",
     "react": "19.2.4",
     "react-dom": "19.2.4",
     "uuid": "^14.0.0"
   },
   "devDependencies": {
+    "@playwright/test": "^1.61.0",
     "@tailwindcss/postcss": "^4",
     "@types/bcryptjs": "^2.4.6",
     "@types/node": "^20.19.43",
