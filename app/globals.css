@@ -25,6 +25,57 @@
   --color-navy: #1e3a52;
   --color-parchment: #f0e8d8;
   --color-brass: #b8860b;
+
+  /* Design-system tokens (LearnCuriosity_DesignSystem v1.0) */
+  --color-charcoal: #233137;
+  --color-cream-border: #E3DCC8;
+  --color-bubble: #E1F5EE;
+  --color-pillar-critical: #5B6FA8;
+  --color-pillar-resilience: #4F8B6E;
+  --color-pillar-creativity: #8B5FA3;
+  --color-pillar-articulation: #D9714F;
+  --color-pillar-learning: #C98A3E;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(6px); }
+  to   { opacity: 1; transform: none; }
+}
+
+@keyframes slideIn {
+  from { opacity: 0; transform: translateX(24px); }
+  to   { opacity: 1; transform: none; }
+}
+
+@keyframes stepProgress {
+  from { width: 0; }
+  to   { width: 100%; }
+}
+
+/* Hide scrollbars on the mobile snap carousels without disabling scroll */
+.scrollbar-none {
+  scrollbar-width: none;
+}
+.scrollbar-none::-webkit-scrollbar {
+  display: none;
+}
+
+/* Fade-up scroll reveal — applied by FadeUp component */
+.fade-up {
+  opacity: 0;
+  transform: translateY(20px);
+  transition: opacity 0.3s ease-out, transform 0.3s ease-out;
+}
+.fade-up.is-visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+@media (prefers-reduced-motion: reduce) {
+  .fade-up {
+    opacity: 1;
+    transform: none;
+    transition: none;
+  }
 }
 
 body {
