@@ -88,7 +88,7 @@ export async function POST(req: NextRequest) {
   const systemPrompt = buildFreeChatPrompt(mentor.voiceNote, mentor.name, gradeBand);
 
   const result = streamText({
-    model: anthropic("claude-fable-5"),
+    model: anthropic("claude-opus-4-8"),
     system: systemPrompt,
     messages: messages.map((m) => ({ role: m.role, content: m.content })),
     maxOutputTokens: 256,
