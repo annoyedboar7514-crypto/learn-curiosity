@@ -6,6 +6,10 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { SignOutButton } from "@clerk/nextjs";
 import { ERAS, LEVELS, type Pillar } from "@/lib/content/levels";
+import { getUnlockedCrossroads, getNextCrossroads } from "@/lib/content/crossroads";
+import type { GradeBand as CrGradeBand } from "@/lib/content/lessonSchema";
+
+const CR_GRADE: Record<string, CrGradeBand> = { "K-2": "k2", "3-4": "grade34", "5-6": "grade56" };
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -296,6 +300,47 @@ export default function HomeClient({ profile }: { profile: HomeProfile }) {
               </div>
               <span className="start-go">Start →</span>
             </button>
+
+            {/* Crossroads landmarks — unlocked waypoints + next-landmark teaser */}
+            {(() => {
+              const band = CR_GRADE[profile.gradeBand] ?? "grade34";
+              const unlocked = getUnlockedCrossroads(profile.completedLevels, band);
+              const next = getNextCrossroads(profile.currentLevelId, band);
+              if (!unlocked.length && !next) return null;
+              return (
+                <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+                  {unlocked.map((s) => (
+                    <button
+                      key={s.id}
+                      onClick={() => router.push(`/crossroads/${s.id}`)}
+                      style={{
+                        width: "100%", textAlign: "left", cursor: "pointer",
+                        display: "flex", alignItems: "center", gap: 14,
+                        background: "linear-gradient(120deg, #1B6E6B, #14524F)",
+                        color: "#FBF6EC", border: "2px solid #E8A33D",
+                        borderRadius: 18, padding: "16px 20px",
+                        boxShadow: "0 0 18px rgba(232,163,61,.35)",
+                      }}
+                    >
+                      <span style={{ fontSize: 30 }}>⭐</span>
+                      <span style={{ flex: 1 }}>
+                        <span style={{ display: "block", fontFamily: "IBM Plex Mono, monospace", fontSize: 10, letterSpacing: ".1em", textTransform: "uppercase", opacity: .85 }}>
+                          Crossroads in history · Era {s.era} · always open
+                        </span>
+                        <span style={{ display: "block", fontFamily: "Fraunces, Georgia, serif", fontWeight: 600, fontSize: 18, marginTop: 2 }}>{s.title}</span>
+                      </span>
+                      <span style={{ fontWeight: 700, color: "#E8A33D" }}>Play →</span>
+                    </button>
+                  ))}
+                  {next && !unlocked.some((s) => s.id === next.id) && (
+                    <div style={{ display: "flex", alignItems: "center", gap: 12, background: "#fff", border: "1.5px dashed #B99A5A", borderRadius: 14, padding: "12px 18px", fontSize: 13.5, color: "#233137" }}>
+                      <span style={{ fontSize: 22, opacity: .7 }}>🔒⭐</span>
+                      <span>A crossroads in history is ahead — finish <b>Level {next.landmarkAfterLevel}</b> to reach “{next.title}.”</span>
+                    </div>
+                  )}
+                </div>
+              );
+            })()}
 
             {/* Chat with mentor CTA */}
             <button

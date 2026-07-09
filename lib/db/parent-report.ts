@@ -3,6 +3,8 @@ import { getChildProfile } from "@/lib/session";
 import { getQuizResult } from "./quiz-results";
 import { getLessonSessionMeta } from "./lesson-sessions";
 import { getLessonById } from "@/lib/content/lesson-registry";
+import { getLevelById } from "@/lib/content/levels/all100Levels";
+import { getCrossroadsStory } from "@/lib/content/crossroads";
 import {
   buildPillarReport,
   emptyPillars,
@@ -119,6 +121,10 @@ export async function getParentReport(): Promise<ParentReport> {
   for (const [sessionId, rows] of grouped) {
     const lessonId = rows[0].lesson_id;
     const lesson = getLessonById(lessonId);
+    // Numbered levels (all100Levels) use numeric ids the registry can't resolve
+    const numericLevel = /^\d+$/.test(lessonId) ? getLevelById(Number(lessonId)) : undefined;
+    // Crossroads debriefs log as "crossroads:<storyId>"
+    const crossroads = lessonId.startsWith("crossroads:") ? getCrossroadsStory(lessonId.slice(11)) : null;
     const meta = metaBySession.get(sessionId);
     const startSec = rows[0].created_at;
     const endSec = rows[rows.length - 1].created_at;
@@ -126,11 +132,14 @@ export async function getParentReport(): Promise<ParentReport> {
     // duration: prefer recorded metadata, else span of message timestamps
     const durationMs = meta?.durationMs && meta.durationMs > 0 ? meta.durationMs : Math.max(0, (endSec - startSec) * 1000);
 
+    let messageRedirects = 0;
     const transcript: TranscriptTurn[] = rows.map((r) => {
-      const escalated = r.role === "assistant" && r.content.startsWith("[ESCALATE]");
+      const isAssistant = r.role === "assistant";
+      const escalated = isAssistant && r.content.startsWith("[ESCALATE]");
+      if (isAssistant && r.content.startsWith("[REDIRECT]")) messageRedirects++;
       return {
-        role: r.role === "assistant" ? "mentor" : "child",
-        text: escalated ? r.content.replace(/^\[ESCALATE\]\s*/, "") : r.content,
+        role: isAssistant ? "mentor" : "child",
+        text: r.content.replace(/^\[(ESCALATE|REDIRECT)\]\s*/, ""),
         escalated,
       };
     });
@@ -138,7 +147,10 @@ export async function getParentReport(): Promise<ParentReport> {
     const mentorTurns = transcript.filter((t) => t.role === "mentor").length;
     const escalationCount = transcript.filter((t) => t.escalated).length;
 
-    const pillarKey = meta?.pillar ? normalizePillar(meta.pillar) : (lesson ? normalizePillar(lesson.pillar) : null);
+    const pillarKey =
+      (meta?.pillar ? normalizePillar(meta.pillar) : null) ??
+      (lesson ? normalizePillar(lesson.pillar) : null) ??
+      (numericLevel ? normalizePillar(numericLevel.pillar ?? null) : null);
     const gain = meta?.pillarGain && meta.pillarGain > 0 ? meta.pillarGain : lessonPillarGain(childTurns);
     if (pillarKey) gains[pillarKey] += gain;
 
@@ -149,7 +161,10 @@ export async function getParentReport(): Promise<ParentReport> {
 
     sessions.push({
       sessionId, lessonId,
-      lessonTitle: lesson?.title ?? lessonId,
+      lessonTitle:
+        lesson?.title ??
+        (crossroads ? `⭐ Crossroads — ${crossroads.title}` : undefined) ??
+        (numericLevel?.title ? `Level ${lessonId} — ${numericLevel.title}` : lessonId),
       pillar: pillarKey,
       pillarName: pillarKey ? PILLAR_NAMES[pillarKey] : null,
       startedAt: startMs,
@@ -157,7 +172,7 @@ export async function getParentReport(): Promise<ParentReport> {
       childTurns,
       decisionAnswer: meta?.decisionAnswer ?? null,
       transcript,
-      redirectCount: meta?.flags?.length ?? 0,
+      redirectCount: (meta?.flags?.length ?? 0) + messageRedirects,
       escalationCount,
       redirectFlags: (meta?.flags ?? []).map((f) => ({ topic: f.topic, action: f.action })),
     });

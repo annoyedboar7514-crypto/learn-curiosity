@@ -23,10 +23,11 @@ export function LessonPageClient({ lesson, gradeBand, childName, mentorName, arc
         sessionId:      data.sessionId,
         lessonId:       data.lessonId,
         level:          data.level,
+        pillar:         data.pillar,
         decisionAnswer: data.decisionAnswer,
         durationMs:     data.durationMs,
         startedAt:      data.startedAt,
-        userTurns:      data.questionCount,
+        userTurns:      data.messages.filter(m => m.role === 'user').length || data.questionCount,
       }),
     }).catch(() => {/* non-fatal */})
 

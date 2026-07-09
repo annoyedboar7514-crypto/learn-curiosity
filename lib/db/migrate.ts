@@ -121,4 +121,23 @@ export async function runMigrations() {
   // and current code inserts without parent_id. Safe to run multiple times.
   await sql`ALTER TABLE coppa_consent  ALTER COLUMN parent_id DROP NOT NULL`.catch(() => {});
   await sql`ALTER TABLE child_profiles ALTER COLUMN parent_id DROP NOT NULL`.catch(() => {});
+
+  // ---- Crossroads runs (branching story mode — docs/crossroads-spec-v1.1.md §11) ----
+  await sql`
+    CREATE TABLE IF NOT EXISTS crossroads_runs (
+      id               TEXT PRIMARY KEY,
+      clerk_user_id    TEXT,
+      child_profile_id TEXT,
+      story_id         TEXT NOT NULL,
+      run_number       INTEGER NOT NULL DEFAULT 1,
+      path             JSONB,
+      whys             JSONB,
+      ending_id        TEXT,
+      rewind_count     INTEGER NOT NULL DEFAULT 0,
+      duration_ms      BIGINT NOT NULL DEFAULT 0,
+      started_at       BIGINT NOT NULL DEFAULT extract(epoch from now())::BIGINT,
+      ended_at         BIGINT
+    )
+  `;
+  await sql`CREATE INDEX IF NOT EXISTS idx_crossroads_runs_child ON crossroads_runs(clerk_user_id, story_id)`.catch(() => {});
 }

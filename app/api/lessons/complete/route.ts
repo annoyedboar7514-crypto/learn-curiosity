@@ -3,11 +3,12 @@ import { auth } from "@clerk/nextjs/server";
 import { getChildProfileId } from "@/lib/session";
 import { recordLessonSession, type RedirectFlag } from "@/lib/db/lesson-sessions";
 import { getLessonById } from "@/lib/content/lesson-registry";
+import { getLevelById } from "@/lib/content/levels/all100Levels";
 import { normalizePillar, lessonPillarGain } from "@/lib/grading";
 
 // POST /api/lessons/complete
 // Body: {
-//   sessionId, lessonId, level?, decisionAnswer?, durationMs?,
+//   sessionId, lessonId, level?, pillar?, decisionAnswer?, durationMs?,
 //   startedAt?, userTurns?, flags?
 // }
 // Records the per-session metadata for a finished lesson. The transcript
@@ -22,6 +23,7 @@ export async function POST(req: NextRequest) {
     sessionId?: string;
     lessonId?: string;
     level?: number;
+    pillar?: string;
     decisionAnswer?: string;
     durationMs?: number;
     startedAt?: number;
@@ -38,8 +40,13 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "sessionId and lessonId are required" }, { status: 400 });
   }
 
-  const lesson = getLessonById(body.lessonId);
-  const pillar = lesson ? normalizePillar(lesson.pillar) : null;
+  // Resolve the pillar: registry (string ids) → numbered levels → client payload
+  const registryLesson = getLessonById(body.lessonId);
+  const numericLevel = body.level != null ? getLevelById(Number(body.level)) : undefined;
+  const pillar =
+    (registryLesson && normalizePillar(registryLesson.pillar)) ??
+    (numericLevel && normalizePillar(numericLevel.pillar ?? null)) ??
+    normalizePillar(body.pillar ?? null);
   const gain = lessonPillarGain(Number(body.userTurns) || 0);
   const childProfileId = await getChildProfileId();
 
