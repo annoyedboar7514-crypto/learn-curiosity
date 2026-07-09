@@ -46,3 +46,8 @@ next-env.d.ts
 LearnCuriosity/
 
 .vercel
+
+# local verification artifacts (dev tools, never committed)
+verify-*.mjs
+verify-screenshots/
+.verify/
