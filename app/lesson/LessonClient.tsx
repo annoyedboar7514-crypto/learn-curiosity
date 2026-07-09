@@ -89,10 +89,11 @@ export default function LessonClient({
           childProfileId,
         }),
       });
-      const data = await res.json();
+      // /api/chat returns the mentor's reply as plain text (already safety-screened)
+      const content = (await res.text()).trim();
       setChatMessages((prev) => [
         ...prev,
-        { id: crypto.randomUUID(), role: "assistant", content: data.content },
+        { id: crypto.randomUUID(), role: "assistant", content: content || "Tell me more about that." },
       ]);
     } catch {
       setChatMessages((prev) => [

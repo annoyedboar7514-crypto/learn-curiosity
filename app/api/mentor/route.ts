@@ -3,6 +3,7 @@ import Anthropic from "@anthropic-ai/sdk";
 import type { GradeBand, LessonPillar, QuestionBank } from "@/lib/content/lessonSchema";
 import { logMessage } from "@/lib/db/index";
 import { getChildProfileId } from "@/lib/session";
+import { classifyInput, checkMentorOutput } from "@/lib/safety";
 
 const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
 
@@ -108,6 +109,33 @@ export async function POST(req: NextRequest) {
       questionBank,
     })
 
+    // ---- INPUT SAFETY: screen the child's latest message BEFORE the model ----
+    const latestUser = [...history].reverse().find((m) => m.role === "user")?.content ?? ""
+    const safety = classifyInput(latestUser)
+    if (!safety.safe) {
+      const reply = safety.redirectResponse ?? "Let's get back to our story."
+      const marker = safety.escalate ? "[ESCALATE] " : "[REDIRECT] "
+      if (safety.escalate) {
+        console.warn(`[MENTOR-SAFETY] ESCALATE category=${safety.category} lessonId=${lessonId} childName=${childName}`)
+      }
+      if (sessionId && lessonId != null) {
+        const sid = String(sessionId)
+        const lid = String(lessonId)
+        getChildProfileId().then((childProfileId) => {
+          // store the child's message and the safe redirect (marked so the parent dashboard flags it)
+          logMessage({ sessionId: sid, childProfileId, lessonId: lid, role: "user", content: latestUser }).catch(() => {})
+          logMessage({ sessionId: sid, childProfileId, lessonId: lid, role: "assistant", content: marker + reply }).catch(() => {})
+        }).catch(() => {})
+      }
+      return NextResponse.json({
+        response: reply,
+        questionCount,
+        escalation: safety.escalate,
+        redirect: !safety.escalate,
+        blocked: true,
+      })
+    }
+
     // If the child is disengaging (very short answers 2+ times), nudge
     const lastFew = history.slice(-4).filter(m => m.role === "user")
     const disengaged = lastFew.length >= 2 && lastFew.every(m => m.content.trim().length < 10)
@@ -130,6 +158,13 @@ export async function POST(req: NextRequest) {
     const isEscalation = text.startsWith("[ESCALATE]")
     const cleanText = isEscalation ? text.replace("[ESCALATE]", "").trim() : text
 
+    // ---- OUTPUT SAFETY: screen the mentor's reply before the child sees it ----
+    const guarded = checkMentorOutput(cleanText)
+    const outText = guarded.text
+    // What we persist: keep [ESCALATE] raw for the parent dashboard; mark a
+    // blocked reply as a redirect so it's visible too.
+    const storeText = isEscalation ? text : guarded.blocked ? "[REDIRECT] " + outText : outText
+
     if (isEscalation) {
       console.warn(`[MENTOR-ESCALATE] lessonId=${lessonId} childName=${childName}`)
     }
@@ -144,13 +179,13 @@ export async function POST(req: NextRequest) {
         if (lastMsg?.role === "user") {
           logMessage({ sessionId: sid, childProfileId, lessonId: lid, role: "user", content: lastMsg.content }).catch(() => {})
         }
-        // Store raw text so parent report can detect [ESCALATE] prefix
-        logMessage({ sessionId: sid, childProfileId, lessonId: lid, role: "assistant", content: text }).catch(() => {})
+        // Store the guarded text; keeps [ESCALATE]/[REDIRECT] markers for the parent dashboard
+        logMessage({ sessionId: sid, childProfileId, lessonId: lid, role: "assistant", content: storeText }).catch(() => {})
       }).catch(() => {})
     }
 
     return NextResponse.json({
-      response: cleanText,
+      response: outText,
       questionCount: questionCount + 1,
       escalation: isEscalation,
     })

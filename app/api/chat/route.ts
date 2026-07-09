@@ -1,11 +1,19 @@
 import { NextRequest } from "next/server";
 import { createAnthropic } from "@ai-sdk/anthropic";
-import { streamText } from "ai";
+import { generateText } from "ai";
 import { getMentorCharacter } from "@/lib/mentor/mentor-characters";
-import { classifyInput } from "@/lib/safety/index";
+import { classifyInput, checkMentorOutput } from "@/lib/safety/index";
 import { logMessage } from "@/lib/db/index";
 
 const anthropic = createAnthropic({ apiKey: process.env.ANTHROPIC_API_KEY ?? "" });
+
+// Plain-text response — both consumers handle it: ChatInterface reads the body
+// as a text stream (arrives as one chunk), LessonClient reads the full text.
+function textResponse(text: string): Response {
+  return new Response(text, {
+    headers: { "Content-Type": "text/plain; charset=utf-8" },
+  });
+}
 
 // Free-form mentor chat system prompt (not lesson-locked).
 // Keeps the mentor in character, age-appropriate, and safe.
@@ -64,38 +72,45 @@ export async function POST(req: NextRequest) {
   const mentor = getMentorCharacter(mentorId);
   const lastUser = [...messages].reverse().find((m) => m.role === "user");
 
-  // Safety check
+  // ---- INPUT SAFETY: screen the child's message before the model sees it ----
   if (lastUser) {
     const safety = classifyInput(lastUser.content);
     if (!safety.safe) {
-      const escalation = `[ESCALATE] ${safety.redirectResponse}`;
+      const reply = safety.redirectResponse ?? "Let's get back to our story.";
+      const marker = safety.escalate ? "[ESCALATE] " : "[REDIRECT] ";
       await logMessage({ sessionId, childProfileId: childProfileId ?? null, lessonId: "free-chat", role: "user",      content: lastUser.content });
-      await logMessage({ sessionId, childProfileId: childProfileId ?? null, lessonId: "free-chat", role: "assistant", content: escalation });
-      // Return as a stream so the client handles it the same way
-      const encoder = new TextEncoder();
-      const stream = new ReadableStream({
-        start(c) {
-          const msg = (safety.redirectResponse ?? "Let's get back to our story.").replace(/"/g, '\\"');
-          c.enqueue(encoder.encode(`0:"${msg}"\n`));
-          c.close();
-        },
-      });
-      return new Response(stream, { headers: { "Content-Type": "text/plain; charset=utf-8", "X-Vercel-AI-Data-Stream": "v1" } });
+      await logMessage({ sessionId, childProfileId: childProfileId ?? null, lessonId: "free-chat", role: "assistant", content: marker + reply });
+      return textResponse(reply);
     }
     await logMessage({ sessionId, childProfileId: childProfileId ?? null, lessonId: "free-chat", role: "user", content: lastUser.content });
   }
 
   const systemPrompt = buildFreeChatPrompt(mentor.voiceNote, mentor.name, gradeBand);
 
-  const result = streamText({
+  // Generate the full reply first so the OUTPUT guard can screen it before the
+  // child sees a single word (defense in depth — replies are 2-4 sentences,
+  // so the latency cost is small and the guarantee is worth it).
+  const result = await generateText({
     model: anthropic("claude-opus-4-8"),
     system: systemPrompt,
     messages: messages.map((m) => ({ role: m.role, content: m.content })),
     maxOutputTokens: 256,
-    onFinish: async ({ text }) => {
-      await logMessage({ sessionId, childProfileId: childProfileId ?? null, lessonId: "free-chat", role: "assistant", content: text });
-    },
   });
 
-  return result.toTextStreamResponse();
+  const raw = result.text.trim();
+  const isEscalation = raw.startsWith("[ESCALATE]");
+  const clean = isEscalation ? raw.replace("[ESCALATE]", "").trim() : raw;
+
+  // ---- OUTPUT SAFETY: screen the mentor's reply before it is shown ----
+  const guarded = checkMentorOutput(clean);
+  const outText = guarded.text;
+  const storeText = isEscalation
+    ? "[ESCALATE] " + outText
+    : guarded.blocked
+    ? "[REDIRECT] " + outText
+    : outText;
+
+  await logMessage({ sessionId, childProfileId: childProfileId ?? null, lessonId: "free-chat", role: "assistant", content: storeText }).catch(() => {});
+
+  return textResponse(outText);
 }
