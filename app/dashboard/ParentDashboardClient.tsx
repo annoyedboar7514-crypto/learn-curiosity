@@ -25,7 +25,7 @@ export default function ParentDashboardClient({ report }: { report: ParentReport
     [String(u.lessonsCompleted), "Lessons completed", "full mentor sessions"],
     [String(u.questionsAnswered), "Questions answered", `${report.quiz?.answers.length ?? 0} quiz · ${u.mentorQuestions} with mentor`],
     [fmtDuration(u.lessonMs), "Time in lessons", "videos + conversations"],
-    [`${u.streakDays}${u.streakDays === 1 ? " day" : " days"}`, "Curiosity streak", "days in a row"],
+    [String(u.sessionsCount), "Sessions", "mentor conversations"],
     [u.lastActive ? fmtRelative(u.lastActive) : "—", "Last active", "most recent session"],
     [child?.archetype ? cap(child.archetype.replace("-", " ")) : "—", "Archetype", "chosen at signup"],
   ];

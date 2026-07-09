@@ -1,46 +1,11 @@
 import { sql } from "./index";
 import { getLessonById } from "@/lib/content/lesson-registry";
 
-export interface RankInfo {
-  level: number;
-  title: string;
-  icon: string;
-  sparksRequired: number;
-  nextSparksRequired: number | null;
-}
-
-const RANKS: RankInfo[] = [
-  { level: 1, title: "Curious Mind",     icon: "🌱", sparksRequired: 0,   nextSparksRequired: 20  },
-  { level: 2, title: "Young Explorer",   icon: "🧭", sparksRequired: 20,  nextSparksRequired: 50  },
-  { level: 3, title: "Question Seeker",  icon: "🔍", sparksRequired: 50,  nextSparksRequired: 100 },
-  { level: 4, title: "Deep Thinker",     icon: "💭", sparksRequired: 100, nextSparksRequired: 200 },
-  { level: 5, title: "Wisdom Scout",     icon: "⭐", sparksRequired: 200, nextSparksRequired: 350 },
-  { level: 6, title: "Sage in Training", icon: "🦉", sparksRequired: 350, nextSparksRequired: null },
-];
-
-export function getRank(sparks: number): RankInfo & { progressPct: number } {
-  let rank = RANKS[0];
-  for (const r of RANKS) {
-    if (sparks >= r.sparksRequired) rank = r;
-  }
-  const pct =
-    rank.nextSparksRequired === null
-      ? 100
-      : Math.round(
-          ((sparks - rank.sparksRequired) /
-            (rank.nextSparksRequired - rank.sparksRequired)) *
-            100
-        );
-  return { ...rank, progressPct: Math.min(pct, 100) };
-}
-
 export interface ChildProgress {
-  sparks: number;
   totalSessions: number;
   totalUserMessages: number;
   uniquePillars: string[];
   uniqueLessons: string[];
-  rank: RankInfo & { progressPct: number };
   recentLessonIds: string[];
 }
 
@@ -67,17 +32,11 @@ export async function getProgress(childProfileId: string | null): Promise<ChildP
     ),
   ];
 
-  const totalSessions     = Number(sessionRow[0]?.sessions ?? 0);
-  const totalUserMessages = Number(sessionRow[0]?.user_messages ?? 0);
-  const sparks = totalSessions * 10 + totalUserMessages * 2 + uniquePillars.length * 5;
-
   return {
-    sparks,
-    totalSessions,
-    totalUserMessages,
+    totalSessions: Number(sessionRow[0]?.sessions ?? 0),
+    totalUserMessages: Number(sessionRow[0]?.user_messages ?? 0),
     uniquePillars,
     uniqueLessons,
-    rank: getRank(sparks),
     recentLessonIds: recentRows.map((r) => String(r.lesson_id)),
   };
 }

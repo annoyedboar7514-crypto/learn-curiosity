@@ -15,7 +15,7 @@ export const EDGE_OF_THE_MAP: CrossroadsStory = {
   conceptTag: "risk-reward",
   noWin: false,
   ageBands: ["k2", "grade34", "grade56"],
-  landmarkAfterLevel: 20,
+  landmarkAfterLevel: 7, // spec v1.1 §10 launch slate (per Dylan, July 2026)
   startNodeId: "intro",
   truePathNodeIds: ["intro", "d1", "strait", "d2", "ocean", "d3", "landfall", "end-world"],
   whatReallyHappened:

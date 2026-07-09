@@ -277,7 +277,7 @@ export default function LessonClient({
               {chatMessages.length >= 4 && (
                 <div className="mt-6 pt-5 border-t border-gray-100 flex flex-col items-center gap-3">
                   <p className="text-xs text-gray-400 text-center">
-                    Great thinking — you earned sparks for this reflection!
+                    Great thinking — I loved hearing how you reasoned through that.
                   </p>
                   <div className="flex gap-3 flex-wrap justify-center">
                     <Link
@@ -285,12 +285,6 @@ export default function LessonClient({
                       className="px-6 py-2.5 rounded-full bg-[#1e3a52] text-white text-sm font-semibold hover:bg-[#162d3f] transition-all"
                     >
                       🏠 Back to Home
-                    </Link>
-                    <Link
-                      href="/student"
-                      className="px-6 py-2.5 rounded-full border-2 border-[#1e3a52] text-[#1e3a52] text-sm font-semibold hover:bg-[#1e3a52] hover:text-white transition-all"
-                    >
-                      ⭐ See my sparks
                     </Link>
                   </div>
                 </div>

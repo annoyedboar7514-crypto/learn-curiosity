@@ -5,7 +5,6 @@ import { auth } from "@clerk/nextjs/server";
 import { getChildProfile } from "@/lib/session";
 import { getProgress } from "@/lib/db/progress";
 import HomeClient from "@/app/home/HomeClient";
-import { LEVELS, type Pillar } from "@/lib/content/levels";
 
 const ARCHETYPE_EMOJI: Record<string, string> = {
   "explorer":         "🧭",
@@ -33,7 +32,6 @@ export default async function HomePage() {
 
   // Load real progress from DB
   let completedLevels: number[] = [];
-  let xp: Record<Pillar, number> = { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 };
 
   try {
     const progress = await getProgress(profile?.id ?? null);
@@ -42,16 +40,6 @@ export default async function HomePage() {
     completedLevels = progress.uniqueLessons
       .map(id => parseInt(id, 10))
       .filter(n => !isNaN(n) && n >= 1 && n <= 100);
-
-    // Tally per-pillar XP from completed levels using the levels definition
-    for (const levelId of completedLevels) {
-      const level = LEVELS.find(l => l.id === levelId);
-      if (!level) continue;
-      xp[level.pillar] = (xp[level.pillar] ?? 0) + level.xpReward.pillar;
-      if (level.bonusPillar) {
-        xp[level.bonusPillar] = (xp[level.bonusPillar] ?? 0) + Math.round(level.xpReward.pillar / 2);
-      }
-    }
   } catch { /* DB unavailable — fall back to zeros */ }
 
   // Current level = first uncompleted level after the last completed one
@@ -67,8 +55,6 @@ export default async function HomePage() {
       archetypeEmoji:  ARCHETYPE_EMOJI[archKey] ?? "🧭",
       completedLevels,
       currentLevelId,
-      xp,
-      streakDays:      0,
       quizPending:     !profile.archetype,
     }} />
   );

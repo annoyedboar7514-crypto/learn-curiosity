@@ -49,7 +49,6 @@ export interface ParentReport {
     lessonsCompleted: number;
     questionsAnswered: number;
     mentorQuestions: number;
-    streakDays: number;
     lastActive: number | null;
     sessionsCount: number;
   };
@@ -79,7 +78,7 @@ export async function getParentReport(): Promise<ParentReport> {
     hasProfile: !!profile,
     child: profile ? { nickname: profile.nickname, gradeBand: profile.gradeBand, archetype: profile.archetype } : null,
     hasQuiz: false, quiz: null,
-    usage: { totalMs: 0, quizMs: 0, lessonMs: 0, lessonsCompleted: 0, questionsAnswered: 0, mentorQuestions: 0, streakDays: 0, lastActive: null, sessionsCount: 0 },
+    usage: { totalMs: 0, quizMs: 0, lessonMs: 0, lessonsCompleted: 0, questionsAnswered: 0, mentorQuestions: 0, lastActive: null, sessionsCount: 0 },
     pillarReport: buildPillarReport(emptyPillars(), emptyPillars()),
     pillarsMeasured: false, sessions: [], timeByDay: [], consentAt: null,
   };
@@ -116,7 +115,6 @@ export async function getParentReport(): Promise<ParentReport> {
   const sessions: SessionEntry[] = [];
   const gains = emptyPillars();
   let lessonMs = 0, mentorQuestions = 0, questionsAnswered = 0;
-  const activeDays = new Set<number>();
 
   for (const [sessionId, rows] of grouped) {
     const lessonId = rows[0].lesson_id;
@@ -157,7 +155,6 @@ export async function getParentReport(): Promise<ParentReport> {
     lessonMs += durationMs;
     mentorQuestions += mentorTurns;
     questionsAnswered += childTurns;
-    activeDays.add(Math.floor(startMs / DAY));
 
     sessions.push({
       sessionId, lessonId,
@@ -185,16 +182,9 @@ export async function getParentReport(): Promise<ParentReport> {
 
   // Usage rollups
   const quizMs = quiz?.durationMs ?? 0;
-  if (quiz) { questionsAnswered += quiz.answers.length; activeDays.add(Math.floor((quiz.completedAt * 1000) / DAY)); }
+  if (quiz) { questionsAnswered += quiz.answers.length; }
   const lessonsCompleted = sessions.length;
   const lastActive = sessions[0]?.startedAt ?? (quiz ? quiz.completedAt * 1000 : null);
-
-  // Streak: consecutive days with any activity, ending at the most recent active day
-  let streakDays = 0;
-  if (activeDays.size) {
-    let cursor = Math.max(...activeDays);
-    while (activeDays.has(cursor)) { streakDays++; cursor--; }
-  }
 
   // Time-by-day for last 7 days
   const today = Math.floor(Date.now() / DAY);
@@ -225,7 +215,7 @@ export async function getParentReport(): Promise<ParentReport> {
     } : null,
     usage: {
       totalMs: quizMs + lessonMs, quizMs, lessonMs, lessonsCompleted,
-      questionsAnswered, mentorQuestions, streakDays,
+      questionsAnswered, mentorQuestions,
       lastActive, sessionsCount: sessions.length,
     },
     pillarReport: buildPillarReport(baseline, gains),

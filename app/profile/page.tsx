@@ -59,11 +59,14 @@ export default async function ProfilePage() {
           </div>
           <h1 className="font-serif text-2xl font-semibold text-navy">{profile.nickname}</h1>
           <p className="text-sm font-body text-navy/50 mt-1">{GRADE_LABELS[profile.gradeBand] ?? profile.gradeBand}</p>
-          <div className="flex items-center gap-2 mt-3 bg-parchment rounded-full px-4 py-1.5">
-            <span className="text-base select-none">{progress.rank.icon}</span>
-            <span className="font-serif text-sm font-semibold text-navy">{progress.rank.title}</span>
-            <span className="text-xs text-navy/40 font-body">· {progress.sparks} sparks</span>
-          </div>
+          {progress.uniqueLessons.length > 0 && (
+            <div className="flex items-center gap-2 mt-3 bg-parchment rounded-full px-4 py-1.5">
+              <span className="text-base select-none">📖</span>
+              <span className="font-serif text-sm font-semibold text-navy">
+                {progress.uniqueLessons.length} {progress.uniqueLessons.length === 1 ? "story" : "stories"} explored
+              </span>
+            </div>
+          )}
         </div>
 
         {/* Settings cards */}
@@ -126,19 +129,6 @@ export default async function ProfilePage() {
             <div className="flex items-center gap-3">
               <span className="text-xl select-none">📋</span>
               <span className="font-serif text-navy font-semibold">Parent Dashboard</span>
-            </div>
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-navy/30">
-              <polyline points="9 18 15 12 9 6" />
-            </svg>
-          </Link>
-
-          <Link
-            href="/student"
-            className="flex items-center justify-between bg-white rounded-2xl border border-parchment px-5 py-4 hover:border-teal/40 transition-colors"
-          >
-            <div className="flex items-center gap-3">
-              <span className="text-xl select-none">⭐</span>
-              <span className="font-serif text-navy font-semibold">My Sparks & Progress</span>
             </div>
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-navy/30">
               <polyline points="9 18 15 12 9 6" />

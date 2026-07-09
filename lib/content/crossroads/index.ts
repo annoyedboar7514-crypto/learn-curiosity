@@ -1,7 +1,7 @@
 // Crossroads registry + landmark placement.
-// Cadence (per Dylan): one crossroads landmark every ~20 levels — i.e. one per
-// era, at the era boundary. (Spec v1.1's launch slate used tighter positions;
-// the every-20 cadence is the product decision and wins.)
+// Placement (per Dylan, July 2026 — overrules the earlier every-20 cadence):
+// spec v1.1 §10 launch slate positions win. The Builder's Shortcut lands after
+// level 3, The Edge of the Map after level 7; pilot ships both.
 
 import type { GradeBand } from "@/lib/content/lessonSchema";
 import type { CrossroadsStory } from "./schema";
@@ -9,11 +9,12 @@ import { validateStory } from "./schema";
 import { EDGE_OF_THE_MAP } from "./edge-of-the-map";
 
 export const CROSSROADS_STORIES: CrossroadsStory[] = [
-  EDGE_OF_THE_MAP, // after level 20 (era 1 → 2 gateway)
-  // TODO(content): "The Frozen Choice" (Shackleton, tradeoff, no-win, 3-4/5-6) — after level 40
-  // TODO(content): "The Inventor's Gamble" (sunk cost, 3-4/5-6) — after level 60
-  // TODO(content): "Four Days Home" (Apollo 13, win-loss vs loss-loss, no-win) — after level 80
-  // TODO(content): era-5 capstone crossroads — after level 100
+  // TODO(content): "The Builder's Shortcut" (integrity vs speed) — after level 3 (spec §10, needed for pilot)
+  EDGE_OF_THE_MAP, // after level 7 (spec §10, needed for pilot)
+  // TODO(content): "The Frozen Choice" (Shackleton, tradeoff, no-win, 3-4/5-6)
+  // TODO(content): "The Inventor's Gamble" (sunk cost, 3-4/5-6)
+  // TODO(content): "Four Days Home" (Apollo 13, win-loss vs loss-loss, no-win)
+  // TODO(content): era-5 capstone crossroads
 ];
 
 // Fail loudly at build/dev time if a story breaks the diamond rules.

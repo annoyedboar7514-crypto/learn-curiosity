@@ -20,8 +20,6 @@ export interface HomeProfile {
   archetypeEmoji: string;
   completedLevels: number[];
   currentLevelId: number;
-  xp: Record<Pillar, number>;
-  streakDays: number;
   quizPending?: boolean;    // true = quiz not yet taken
 }
 
@@ -179,6 +177,16 @@ export default function HomeClient({ profile }: { profile: HomeProfile }) {
   const pillarOfLesson = PILLAR_META.find(p => p.id === currentLevel.pillar)!;
   const done = profile.completedLevels.length;
 
+  // Neutral exploration facts (no points/XP/streaks — forbidden list)
+  const doneSet = new Set(profile.completedLevels);
+  const pillarCounts = {} as Record<Pillar, number>;
+  for (const id of profile.completedLevels) {
+    const lvl = LEVELS.find(l => l.id === id);
+    if (lvl) pillarCounts[lvl.pillar] = (pillarCounts[lvl.pillar] ?? 0) + 1;
+  }
+  const pillarsExplored = Object.values(pillarCounts).filter(n => n > 0).length;
+  const erasVisited = ERAS.filter(e => e.levels.some(id => doneSet.has(id))).length;
+
   // Wire archetype colour to body so CSS vars cascade correctly
   useEffect(() => {
     document.body.setAttribute("data-archetype", cssArch);
@@ -278,8 +286,6 @@ export default function HomeClient({ profile }: { profile: HomeProfile }) {
 
             {/* Big START button */}
             <button className="start" onClick={() => router.push(`/lesson/${profile.currentLevelId}`)}>
-              <span className="spark">✦</span>
-              <span className="spark2">⭐</span>
               <div className="start-play">
                 <svg viewBox="0 0 24 24" fill="currentColor">
                   <path d="M8 5v14l11-7z" />
@@ -402,7 +408,7 @@ export default function HomeClient({ profile }: { profile: HomeProfile }) {
             {/* Pillar skill cards */}
             <div className="pillars-row">
               {PILLAR_META.map(p => {
-                const xpVal = profile.xp[p.id] ?? 0;
+                const n = pillarCounts[p.id] ?? 0;
                 return (
                   <div key={p.id} className="pcard"
                     style={{ "--pillar": p.color } as React.CSSProperties}>
@@ -410,7 +416,7 @@ export default function HomeClient({ profile }: { profile: HomeProfile }) {
                       <span style={{ fontSize: 26 }}>{p.icon}</span>
                     </div>
                     <div className="pname">{p.name}</div>
-                    <div className="pcount">{xpVal} XP · {p.shortDesc}</div>
+                    <div className="pcount">{n === 1 ? "1 story" : `${n} stories`} · {p.shortDesc}</div>
                   </div>
                 );
               })}
@@ -439,16 +445,16 @@ export default function HomeClient({ profile }: { profile: HomeProfile }) {
                 <h3>Your Stats</h3>
                 <div className="stat-grid">
                   <div className="stat">
-                    <div className="n">{profile.streakDays}</div>
-                    <div className="l">Day streak 🔥</div>
-                  </div>
-                  <div className="stat">
                     <div className="n">{done}</div>
-                    <div className="l">Levels done ✓</div>
+                    <div className="l">Stories completed ✓</div>
                   </div>
                   <div className="stat">
-                    <div className="n">{Object.values(profile.xp).reduce((a, b) => a + b, 0)}</div>
-                    <div className="l">Total XP ⭐</div>
+                    <div className="n">{erasVisited}</div>
+                    <div className="l">Eras visited 🗺️</div>
+                  </div>
+                  <div className="stat">
+                    <div className="n">{pillarsExplored}</div>
+                    <div className="l">Skills explored 💡</div>
                   </div>
                   <div className="stat">
                     <div className="n">{Math.max(0, profile.currentLevelId - 1)}</div>
@@ -473,14 +479,14 @@ export default function HomeClient({ profile }: { profile: HomeProfile }) {
               <h3>Skill Growth</h3>
               <div className="pillars-grid">
                 {PILLAR_META.map(p => {
-                  const xpVal = profile.xp[p.id] ?? 0;
-                  const maxXp = 500;
-                  const pct = Math.min((xpVal / maxXp) * 100, 100);
+                  const n = pillarCounts[p.id] ?? 0;
+                  const total = LEVELS.filter(l => l.pillar === p.id).length || 1;
+                  const pct = Math.min((n / total) * 100, 100);
                   return (
                     <div key={p.id} className="prow">
                       <div className="top">
                         <span className="pn">{p.icon} {p.name}</span>
-                        <span className="pc">{xpVal} / {maxXp} XP</span>
+                        <span className="pc">{n} of {total} stories</span>
                       </div>
                       <div className="pbar">
                         <span style={{
