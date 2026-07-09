@@ -1,7 +1,7 @@
 'use client'
+import { useState } from 'react'
 import type { Lesson } from '@/lib/content/lessonSchema'
-import { SortGame } from './games/SortGame'
-import { ArgumentBuilder } from './games/ArgumentBuilder'
+import { MiniGame } from './games/MiniGame'
 
 interface Props {
   lesson: Partial<Lesson>
@@ -10,6 +10,12 @@ interface Props {
 }
 
 export function Phase3Consequence({ lesson, choice, onComplete }: Props) {
+  const hasGame = !!lesson.miniGame && lesson.miniGame.type !== 'none'
+  const [gameDone, setGameDone] = useState(false)
+  // The mini-game is a true "pause": when a lesson has one, the mentor
+  // conversation unlocks only after the child has played it.
+  const ready = !hasGame || gameDone
+
   return (
     <div className="lc-phase-in">
       {/* Choice recall */}
@@ -40,35 +46,18 @@ export function Phase3Consequence({ lesson, choice, onComplete }: Props) {
         </div>
       </div>
 
-      {/* Mini game */}
-      {lesson.miniGame && lesson.miniGame.type !== 'none' && (
-        <>
-          {lesson.miniGame.type === 'sort' && <SortGame game={lesson.miniGame} />}
-          {lesson.miniGame.type === 'argument-builder' && <ArgumentBuilder game={lesson.miniGame} />}
-          {lesson.miniGame.type === 'improve-solution' && (
-            <div className="lc-game">
-              <div className="lc-game-header">
-                <span style={{ fontSize: 22 }}>🔬</span>
-                <span className="lc-game-title">{lesson.miniGame.title}</span>
-              </div>
-              <p className="lc-game-instr">{lesson.miniGame.instruction}</p>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-                {(lesson.miniGame.items ?? []).map((item, i) => (
-                  <div
-                    key={i}
-                    style={{ background: 'white', border: '1px solid #E3DCC8', borderRadius: 12, padding: '12px 14px', fontSize: 13, color: '#233137' }}
-                  >
-                    {i + 1}. {item}
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
-        </>
+      {/* Mini game — a fun, thinking "pause" before the mentor conversation */}
+      {hasGame && (
+        <MiniGame game={lesson.miniGame!} onDone={() => setGameDone(true)} />
       )}
 
-      <button className="lc-btn lc-btn-theme" onClick={onComplete}>
-        Talk with my mentor
+      <button
+        className="lc-btn lc-btn-theme"
+        onClick={onComplete}
+        disabled={!ready}
+        style={!ready ? { opacity: 0.5, cursor: 'not-allowed' } : undefined}
+      >
+        {ready ? 'Talk with my mentor' : 'Play the quick game first ↑'}
         <span className="lc-btn-arrow">→</span>
       </button>
     </div>

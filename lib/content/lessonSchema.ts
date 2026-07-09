@@ -1,7 +1,7 @@
 export type GradeBand = 'k2' | 'grade34' | 'grade56'
 export type LessonPillar = 'critical' | 'resilience' | 'creativity' | 'communication' | 'learning'
 export type Era = 1 | 2 | 3 | 4 | 5
-export type GameType = 'sort' | 'argument-builder' | 'improve-solution' | 'none'
+export type GameType = 'sort' | 'argument-builder' | 'improve-solution' | 'match' | 'none'
 export type ArchetypeSkin = 'explorer' | 'astronaut' | 'detective' | 'inventor' | 'artist' | 'healer'
 
 export interface ChoiceCard {
@@ -22,9 +22,14 @@ export interface MiniGame {
   type: GameType
   title: string
   instruction: string
-  items?: string[]
-  claims?: string[]
-  reasons?: string[]
+  items?: string[]                 // sort: items to order · improve-solution: the rough notes
+  claims?: string[]                // argument-builder
+  reasons?: string[]               // argument-builder
+  strongReasons?: number[]         // argument-builder: indices of reasons that actually PROVE the claim
+  improvements?: string[]          // improve-solution: candidate upgrades to choose from
+  bestImprovement?: number         // improve-solution: index of the strongest upgrade
+  pairs?: { left: string; right: string }[]  // match: cause → effect pairs
+  reflection?: string              // encouraging closing line shown after the child plays
 }
 
 export interface ArchetypeSkinData {

@@ -307,6 +307,7 @@ export const LEVEL_4: Partial<Lesson> = {
       "Because it forces you to keep questioning your assumptions",
       "Because other people trust confident people more",
     ],
+    strongReasons: [0, 2],
   },
   questionBanks: {
     k2: {
@@ -395,6 +396,14 @@ export const LEVEL_5: Partial<Lesson> = {
       "It flew away when a noise happened.",
       "It looked like other birds I have seen.",
     ],
+    improvements: [
+      "Add exactly which foot it favored and the angle of its head",
+      "Make the handwriting neater",
+      "Write the notes faster next time",
+      "Add how watching the bird made you feel",
+    ],
+    bestImprovement: 0,
+    reflection: "Yes — the more exact and specific you get, the more you actually see. That's the whole difference between looking and observing.",
   },
   questionBanks: {
     k2: {
@@ -470,6 +479,17 @@ export const LEVEL_6: Partial<Lesson> = {
     { emoji: "🗣️", label: "Find someone who disagrees", pillarScore: 2 },
   ],
   consequenceText: "Helia studied in secret. Manuscripts found in her house, discovered generations later, showed a mind asking exactly the questions that the men in her father's study had never thought to ask — because they'd never had to.",
+  miniGame: {
+    type: "match",
+    title: "Match the clue to what it really means",
+    instruction: "Tap a clue on the left, then tap what it actually tells you on the right.",
+    pairs: [
+      { left: "Everyone agrees it's true", right: "Still worth checking for yourself" },
+      { left: "A rule with no reason given", right: "Fair to ask why the rule exists" },
+      { left: "You figured it out yourself", right: "Now you can explain how you know" },
+    ],
+    reflection: "Nice — noticing what a clue actually proves (and what it doesn't) is the heart of thinking clearly.",
+  },
   questionBanks: {
     k2: {
       entry: "Is something true just because a lot of people believe it?",
