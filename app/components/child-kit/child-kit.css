@@ -1,0 +1,263 @@
+/* ══════════════════════════════════════════════════════════════════════════
+   CHILD UI KIT — Stage 1 of the App Rework
+   Same tokens as the design system; child temperature: warm, alive, cinematic.
+   Rule: any child screen uses at most cream + charcoal + ONE accent at a time.
+   ══════════════════════════════════════════════════════════════════════════ */
+
+/* ─── Motion primitives ────────────────────────────────────────────────────
+   gentle-entrance · breathing · story-panel-cross-fade · card-lift ·
+   celebrate-quiet. All respect prefers-reduced-motion (instant-state). */
+
+/* gentle-entrance: settle in with a soft spring — never over 1.02 scale */
+@keyframes ck-gentle-entrance {
+  0%   { opacity: 0; transform: translateY(14px) scale(0.985); }
+  70%  { opacity: 1; transform: translateY(-2px) scale(1.008); }
+  100% { opacity: 1; transform: none; }
+}
+.ck-enter { animation: ck-gentle-entrance 0.55s cubic-bezier(0.22, 1, 0.36, 1) both; }
+.ck-enter-slow { animation: ck-gentle-entrance 0.8s cubic-bezier(0.22, 1, 0.36, 1) both; }
+
+/* breathing: idle mentor avatar + current-landmark glow, 4s cycle */
+@keyframes ck-breathing {
+  0%, 100% { transform: scale(1); }
+  50%      { transform: scale(1.02); }
+}
+.ck-breathing { animation: ck-breathing 4s ease-in-out infinite; }
+
+@keyframes ck-glow-breathing {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(232, 163, 61, 0.45), 0 0 18px 2px rgba(232, 163, 61, 0.25); }
+  50%      { box-shadow: 0 0 0 6px rgba(232, 163, 61, 0.12), 0 0 28px 6px rgba(232, 163, 61, 0.4); }
+}
+.ck-glow { animation: ck-glow-breathing 4s ease-in-out infinite; }
+
+/* story-panel-cross-fade: panels change like slow cinema, 800ms */
+.ck-crossfade { transition: opacity 800ms ease-in-out; }
+@keyframes ck-panel-in { from { opacity: 0; } to { opacity: 1; } }
+.ck-panel-enter { animation: ck-panel-in 800ms ease-in-out both; }
+
+/* card-lift: tappables lift 4px with shadow on press-down, satisfying release */
+.ck-lift {
+  transition: transform 130ms cubic-bezier(0.22, 1, 0.36, 1),
+              box-shadow 130ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+.ck-lift:active {
+  transform: translateY(-4px);
+  box-shadow: 0 12px 22px rgba(35, 49, 55, 0.16);
+}
+
+/* celebrate-quiet: the ONLY completion animation — brief warm glow + mentor
+   line. No confetti, no stars, no fanfare. */
+@keyframes ck-celebrate-glow {
+  0%   { opacity: 0; }
+  30%  { opacity: 1; }
+  75%  { opacity: 1; }
+  100% { opacity: 0; }
+}
+.ck-celebrate-veil {
+  position: fixed; inset: 0; z-index: 90; pointer-events: none;
+  background: radial-gradient(ellipse at 50% 62%, rgba(232, 163, 61, 0.28) 0%, rgba(232, 163, 61, 0.1) 38%, rgba(251, 246, 236, 0) 72%);
+  animation: ck-celebrate-glow 2400ms ease-in-out both;
+}
+@keyframes ck-celebrate-line {
+  0%   { opacity: 0; transform: translateY(10px); }
+  22%  { opacity: 1; transform: none; }
+  80%  { opacity: 1; }
+  100% { opacity: 0; }
+}
+.ck-celebrate-line { animation: ck-celebrate-line 2400ms ease-in-out both; }
+
+@media (prefers-reduced-motion: reduce) {
+  .ck-enter, .ck-enter-slow, .ck-panel-enter,
+  .ck-breathing, .ck-glow,
+  .ck-celebrate-veil, .ck-celebrate-line,
+  .ck-avatar-ring, .ck-mic-bar, .ck-dot, .ck-mic--idle .ck-mic-btn,
+  .ck-mic--speaking .ck-mic-btn {
+    animation: none !important;
+  }
+  .ck-crossfade, .ck-lift { transition: none !important; }
+  .ck-celebrate-veil { opacity: 0; }
+  .ck-celebrate-line { opacity: 1; }
+}
+
+/* ─── Era atmospheres ──────────────────────────────────────────────────────
+   Tinted sky gradient + era motif at 8% opacity. Atmosphere, not decoration. */
+.ck-era { position: relative; isolation: isolate; background: var(--era-sky, var(--color-cream)); }
+.ck-era::before {
+  content: ""; position: absolute; inset: 0; z-index: -1;
+  opacity: 0.08; pointer-events: none;
+  background-image: var(--era-motif, none);
+}
+
+/* Era 1 — Ancient Wonders: warm papyrus sky, reed-line whispers */
+.ck-era-1 {
+  --era-sky: linear-gradient(180deg, #F3E4C6 0%, #FBF6EC 62%);
+  --era-motif: repeating-linear-gradient(180deg, transparent 0 26px, #8A6B3F 26px 27px, transparent 27px 54px);
+}
+/* Era 2 — The Age of Explorers: sea-tinted sky, chart waves */
+.ck-era-2 {
+  --era-sky: linear-gradient(180deg, #D9E8E2 0%, #FBF6EC 62%);
+  --era-motif: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='40'%3E%3Cpath d='M0 20 Q15 8 30 20 T60 20 T90 20 T120 20' fill='none' stroke='%231B6E6B' stroke-width='1.5'/%3E%3C/svg%3E");
+}
+/* Era 3 — The Industrial Age: steel-tinted sky, rivet lines */
+.ck-era-3 {
+  --era-sky: linear-gradient(180deg, #E2E1DA 0%, #FBF6EC 62%);
+  --era-motif: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='56' height='56'%3E%3Ccircle cx='28' cy='28' r='2.5' fill='%23233137'/%3E%3Cpath d='M0 28h18M38 28h18M28 0v18M28 38v18' stroke='%23233137' stroke-width='1'/%3E%3C/svg%3E");
+}
+/* Era 4 — reserved (Age of Flight): high-air sky, contrail arcs */
+.ck-era-4 {
+  --era-sky: linear-gradient(180deg, #DFE6EC 0%, #FBF6EC 62%);
+  --era-motif: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='70'%3E%3Cpath d='M-10 60 Q70 -20 150 60' fill='none' stroke='%235B6FA8' stroke-width='1.5' stroke-dasharray='7 9'/%3E%3C/svg%3E");
+}
+/* Era 5 — reserved (The Space Age): dusk sky, star-chart lines */
+.ck-era-5 {
+  --era-sky: linear-gradient(180deg, #D8DCE8 0%, #FBF6EC 66%);
+  --era-motif: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120'%3E%3Cg stroke='%23233137' stroke-width='1' fill='%23233137'%3E%3Ccircle cx='20' cy='30' r='1.6'/%3E%3Ccircle cx='70' cy='14' r='1.6'/%3E%3Ccircle cx='100' cy='64' r='1.6'/%3E%3Ccircle cx='44' cy='92' r='1.6'/%3E%3Cpath d='M20 30L70 14L100 64L44 92z' fill='none'/%3E%3C/g%3E%3C/svg%3E");
+}
+
+/* ─── Mentor avatar ────────────────────────────────────────────────────────
+   The mentor IS the UI: persistent on every child screen. Idle breathes;
+   speaking glows; thinking replaces spinners; errors speak plainly. */
+.ck-avatar-wrap { display: inline-flex; flex-direction: column; align-items: center; gap: 10px; }
+.ck-avatar {
+  position: relative; display: grid; place-items: center;
+  border-radius: 9999px; background: #fff;
+  border: 3px solid var(--color-teal); user-select: none;
+}
+.ck-avatar--sm { width: 56px; height: 56px; font-size: 26px; }
+.ck-avatar--md { width: 84px; height: 84px; font-size: 40px; }
+.ck-avatar--lg { width: 120px; height: 120px; font-size: 58px; }
+
+@keyframes ck-avatar-ring {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(27, 110, 107, 0.35), 0 0 14px 2px rgba(27, 110, 107, 0.2); }
+  50%      { box-shadow: 0 0 0 7px rgba(27, 110, 107, 0.1), 0 0 26px 6px rgba(27, 110, 107, 0.35); }
+}
+.ck-avatar--speaking { animation: ck-avatar-ring 1.6s ease-in-out infinite; }
+.ck-avatar--error { border-color: var(--color-gold); }
+
+/* thinking / speaking dots ("hmm, let me think…") */
+.ck-dots { display: inline-flex; gap: 4px; align-items: center; }
+.ck-dot {
+  width: 7px; height: 7px; border-radius: 9999px; background: var(--color-teal);
+  animation: ck-dot-bounce 1.2s ease-in-out infinite;
+}
+.ck-dot:nth-child(2) { animation-delay: 0.15s; }
+.ck-dot:nth-child(3) { animation-delay: 0.3s; }
+@keyframes ck-dot-bounce {
+  0%, 60%, 100% { transform: none; opacity: 0.45; }
+  30%           { transform: translateY(-4px); opacity: 1; }
+}
+
+.ck-avatar-line {
+  max-width: 240px; text-align: center;
+  font-family: var(--font-body, Inter, sans-serif);
+  font-size: 15px; line-height: 1.45; color: var(--color-charcoal);
+  background: #fff; border: 2px solid var(--color-cream-border);
+  border-radius: 16px; padding: 8px 14px;
+}
+
+/* persistent bottom-corner presence (every child screen) */
+.ck-presence {
+  position: fixed; left: 16px; bottom: 16px; z-index: 60;
+  display: flex; flex-direction: column; align-items: flex-start; gap: 8px;
+}
+
+/* ─── Mic button — the hero element ───────────────────────────────────────── */
+.ck-mic { display: inline-flex; flex-direction: column; align-items: center; gap: 12px; }
+.ck-mic-btn {
+  position: relative; width: 96px; height: 96px; border-radius: 9999px;
+  display: grid; place-items: center; cursor: pointer; border: none;
+  background: var(--color-gold); color: var(--color-charcoal);
+  box-shadow: 0 6px 0 #c9852a, 0 8px 20px rgba(35, 49, 55, 0.14);
+  transition: transform 130ms ease, box-shadow 130ms ease, background 200ms ease;
+}
+.ck-mic-btn:active { transform: translateY(4px); box-shadow: 0 2px 0 #c9852a, 0 4px 10px rgba(35, 49, 55, 0.12); }
+.ck-mic-btn:disabled { cursor: default; opacity: 0.55; }
+.ck-mic-btn svg { width: 40px; height: 40px; }
+
+@keyframes ck-mic-idle-glow {
+  0%, 100% { box-shadow: 0 6px 0 #c9852a, 0 0 0 0 rgba(232, 163, 61, 0.4); }
+  50%      { box-shadow: 0 6px 0 #c9852a, 0 0 0 12px rgba(232, 163, 61, 0); }
+}
+.ck-mic--idle .ck-mic-btn { animation: ck-mic-idle-glow 3s ease-in-out infinite; }
+
+/* listening: animated waveform ring in gold */
+.ck-mic-wave { display: flex; gap: 5px; align-items: center; height: 26px; }
+.ck-mic-bar {
+  width: 5px; border-radius: 3px; background: var(--color-gold); height: 10px;
+  animation: ck-mic-wave 0.9s ease-in-out infinite;
+}
+.ck-mic-bar:nth-child(1) { animation-delay: 0s; }
+.ck-mic-bar:nth-child(2) { animation-delay: 0.12s; }
+.ck-mic-bar:nth-child(3) { animation-delay: 0.24s; }
+.ck-mic-bar:nth-child(4) { animation-delay: 0.36s; }
+.ck-mic-bar:nth-child(5) { animation-delay: 0.48s; }
+@keyframes ck-mic-wave {
+  0%, 100% { height: 8px; opacity: 0.6; }
+  50%      { height: 24px; opacity: 1; }
+}
+.ck-mic--listening .ck-mic-btn {
+  background: #fff; color: var(--color-gold);
+  box-shadow: 0 6px 0 var(--color-cream-border), 0 0 0 4px rgba(232, 163, 61, 0.5), 0 0 24px 4px rgba(232, 163, 61, 0.35);
+}
+
+/* speaking: gentle pulse synced to audio (approximate CSS pulse) */
+@keyframes ck-mic-speak { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.04); } }
+.ck-mic--speaking .ck-mic-btn { animation: ck-mic-speak 1.4s ease-in-out infinite; }
+
+.ck-mic-label {
+  font-family: var(--font-body, Inter, sans-serif); font-size: 15px;
+  color: var(--color-charcoal); opacity: 0.75;
+}
+
+/* ─── Transcript bubbles ───────────────────────────────────────────────────── */
+.ck-bubble {
+  max-width: 78%; padding: 14px 18px; border-radius: 22px;
+  font-family: var(--font-body, Inter, sans-serif);
+  font-size: 18px; line-height: 1.5; color: var(--color-charcoal);
+}
+.ck-bubble--mentor {
+  align-self: flex-start; background: var(--color-bubble);
+  border: 2px solid rgba(27, 110, 107, 0.18); border-bottom-left-radius: 8px;
+}
+.ck-bubble--child {
+  align-self: flex-end; background: rgba(232, 163, 61, 0.16);
+  border: 2px solid rgba(232, 163, 61, 0.3); border-bottom-right-radius: 8px;
+}
+.ck-bubble-who {
+  display: block; margin-bottom: 2px;
+  font-family: var(--font-mono-brand, monospace);
+  font-size: 10px; letter-spacing: 0.1em; text-transform: uppercase;
+  color: var(--color-teal); opacity: 0.8;
+}
+.ck-bubble--child .ck-bubble-who { color: #a06a1a; }
+
+/* ─── Buttons & cards ──────────────────────────────────────────────────────── */
+.ck-btn {
+  display: inline-flex; align-items: center; justify-content: center; gap: 10px;
+  min-height: 56px; min-width: 56px; padding: 14px 28px;
+  border-radius: 18px; border: none; cursor: pointer;
+  font-family: var(--font-body, Inter, sans-serif);
+  font-size: 18px; font-weight: 600; line-height: 1.2;
+}
+.ck-btn--primary {
+  background: var(--color-gold); color: var(--color-charcoal);
+  box-shadow: 0 5px 0 #c9852a;
+}
+.ck-btn--primary:active { box-shadow: 0 1px 0 #c9852a; transform: translateY(4px); }
+.ck-btn--secondary {
+  background: #fff; color: var(--color-teal);
+  border: 3px solid var(--color-teal);
+}
+.ck-btn--quiet { background: transparent; color: var(--color-charcoal); opacity: 0.75; }
+.ck-btn:disabled { opacity: 0.45; cursor: default; box-shadow: none; transform: none; }
+.ck-btn:focus-visible, .ck-mic-btn:focus-visible, .ck-card-tap:focus-visible {
+  outline: 3px solid var(--color-teal); outline-offset: 3px;
+}
+
+.ck-card {
+  background: #fff; border: 2px solid var(--color-cream-border);
+  border-radius: 24px; padding: 22px 24px;
+  box-shadow: 0 3px 10px rgba(35, 49, 55, 0.06);
+}
+.ck-card--accent { border-left: 6px solid var(--ck-accent, var(--color-teal)); }
+.ck-card-tap { cursor: pointer; text-align: left; width: 100%; }
