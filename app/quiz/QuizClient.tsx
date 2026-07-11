@@ -23,7 +23,7 @@ const PILLARS = [
 ];
 
 export type Grade = "k2" | "grade34" | "grade56";
-type Phase = "quiz" | "reveal" | "parent";
+type Phase = "welcome" | "quiz" | "reveal" | "parent";
 
 interface Card { i: string; l: string; a?: string; sc?: number; }
 interface Question {
@@ -106,6 +106,18 @@ function robotSVG(c: string): string {
   );
 }
 
+// Read-aloud for early readers (Web Speech API — free, built into the browser).
+function speak(text: string) {
+  try {
+    if (typeof window === "undefined" || !window.speechSynthesis) return;
+    window.speechSynthesis.cancel();
+    const u = new SpeechSynthesisUtterance(text);
+    u.rate = 0.92;
+    u.pitch = 1.05;
+    window.speechSynthesis.speak(u);
+  } catch { /* unsupported browser — the button simply does nothing */ }
+}
+
 function pillarLabel(v: number): [string, number] {
   if (v >= 7) return ["Ready to Lead", 1];
   if (v >= 5) return ["Thinking Deeply", 0.72];
@@ -129,16 +141,16 @@ function scoreAnswers(answers: Answer[]): Result {
 
 // ─── Component ────────────────────────────────────────────────────────────────
 
-interface Props { initialGrade?: Grade; nickname?: string; }
+interface Props { initialGrade?: Grade; nickname?: string; showGradeBar?: boolean; }
 
-export default function QuizClient({ initialGrade = "grade34", nickname = "Explorer" }: Props) {
+export default function QuizClient({ initialGrade = "grade34", nickname = "Explorer", showGradeBar = false }: Props) {
   const router = useRouter();
   const [grade, setGrade]   = useState<Grade>(initialGrade);
   const [idx, setIdx]       = useState(0);
   const [answers, setAnswers] = useState<Answer[]>([]);
   const [picked, setPicked] = useState<number | null>(null);
   const [moreText, setMoreText] = useState("");
-  const [phase, setPhase]   = useState<Phase>("quiz");
+  const [phase, setPhase]   = useState<Phase>("welcome");
   const [overlay, setOverlay] = useState(false);
   const [result, setResult] = useState<Result | null>(null);
   const [saving, setSaving] = useState(false);
@@ -261,6 +273,32 @@ export default function QuizClient({ initialGrade = "grade34", nickname = "Explo
         <div ref={particlesRef} style={{ position:"absolute", inset:0, overflow:"hidden" }} />
       </div>
 
+      {/* ── WELCOME — a warm landing before question 1 ── */}
+      {phase === "welcome" && (
+        <div className="qz-welcome">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img className="av" src={robotSVG("#1B6E6B")} alt="Your mentor" />
+          <div className="ey">A quest, not a test</div>
+          <h1>Hi {nickname}!</h1>
+          <p>
+            {grade === "k2"
+              ? "Let's play a picture game to find YOUR story world. Tap the picture you like best — there are no wrong answers!"
+              : grade === "grade34"
+              ? "Let's find your story world! Answer a few fun questions — pick whatever feels most like you. There are no wrong answers, and nobody grades this."
+              : "A few questions to find your story world and how you like to think. Honest answers beat impressive ones — there's no score and no wrong picks."}
+          </p>
+          <button
+            className="btn"
+            onClick={() => { startRef.current = Date.now(); setPhase("quiz"); if (grade === "k2") speak(`Hi ${nickname}! Let's play a picture game. Tap the picture you like best!`); }}
+          >
+            {grade === "k2" ? "Let's play! →" : "Start →"}
+          </button>
+          <button className="pl" onClick={() => speak(grade === "k2" ? `Hi ${nickname}! Let's play a picture game to find your story world. Tap the picture you like best. There are no wrong answers!` : `Hi ${nickname}! Let's find your story world. Pick whatever feels most like you — there are no wrong answers.`)}>
+            🔊 Read it to me
+          </button>
+        </div>
+      )}
+
       {/* ── QUIZ ── */}
       {phase === "quiz" && (
         <>
@@ -282,9 +320,17 @@ export default function QuizClient({ initialGrade = "grade34", nickname = "Explo
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img src={robotSVG("#1B6E6B")} alt="Mentor" />
                 <div className="qz-q">{Q.q}</div>
+                <button
+                  className="qz-speak"
+                  aria-label="Read the question aloud"
+                  title="Read it to me"
+                  onClick={() => speak(`${Q.q}. ${Q.cards.map(c => c.l).join(". Or, ")}.`)}
+                >
+                  🔊
+                </button>
               </div>
 
-              <div className={`qz-cards ${Q.cols === 3 ? "c3" : "c2"} ${picked !== null ? "haspick" : ""}`}>
+              <div className={`qz-cards band-${grade} ${Q.cols === 3 ? "c3" : "c2"} ${picked !== null ? "haspick" : ""}`}>
                 {Q.cards.map((c, ci) => (
                   <button key={ci} className={`qz-card ${picked === ci ? "sel" : ""}`} onClick={() => pick(ci)}>
                     <span className="ill">{c.i}</span>

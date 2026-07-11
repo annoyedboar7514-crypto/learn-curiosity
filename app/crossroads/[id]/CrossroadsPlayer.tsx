@@ -1,25 +1,39 @@
 'use client'
-// Crossroads story player — docs/crossroads-spec-v1.1.md
-// Text-first build of the voice-first spec: node flow, why-gate, consequence
-// echoes, rewind-to-any-visited-decision, ending path map with True Path
-// reveal, and a mentor debrief on the existing (safety-screened) engine.
-// TODO(voice): cached TTS narration + spoken why-gate per spec §8-9.
+// Crossroads story player — docs/crossroads-spec-v1.1.md, Stage 2 skin.
+// Voice-first: narration is spoken (cached per node), choice cards present
+// with weight (slow entrance, stakes spoken as each highlights), the why-gate
+// is its own mic beat, consequence echoes draw a gold thread from the past
+// choice, and the Path Map is the post-story centerpiece — animated gold
+// route draw-in, tempting grey silhouettes, teal True Path reveal.
 
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import type { GradeBand } from '@/lib/content/lessonSchema'
 import type { CrossroadsStory, StoryNode, StoryChoice } from '@/lib/content/crossroads/schema'
 import { CONCEPT_FRAMING } from '@/lib/content/crossroads/schema'
-
-const C = { teal:'#1B6E6B', gold:'#E8A33D', cream:'#FBF6EC', navy:'#233137', border:'#E3DCC8', bubble:'#E1F5EE', brown:'#412402' }
+import { getMentorCharacter } from '@/lib/mentor/mentor-characters'
+import {
+  EraAtmosphere,
+  MentorAvatar,
+  MicButton,
+  type MicState,
+  TranscriptBubble,
+  TranscriptColumn,
+  ChildButton,
+  mentorAudio,
+  useVoiceInput,
+} from '@/app/components/child-kit'
 
 interface Why { nodeId: string; choiceId: string; choiceLabel: string; why: string }
 interface Msg { role: 'user' | 'assistant'; content: string }
 
-export function CrossroadsPlayer({ story, gradeBand, childName, mentorName }: {
+const serif = { fontFamily: 'var(--font-serif, Fraunces, Georgia, serif)' } as const
+
+export function CrossroadsPlayer({ story, gradeBand, childName, mentorId, mentorName }: {
   story: CrossroadsStory
   gradeBand: GradeBand
   childName: string
+  mentorId: string
   mentorName: string
 }) {
   const router = useRouter()
@@ -32,18 +46,25 @@ export function CrossroadsPlayer({ story, gradeBand, childName, mentorName }: {
   const [runNumber, setRunNumber] = useState(1)
   const [rewindCount, setRewindCount] = useState(0)
   const [priorRunCount, setPriorRunCount] = useState(0)
+  // one-time run identity/timing — intentional impure ref initializers
+  // eslint-disable-next-line react-hooks/purity
   const startedAt = useRef(Math.floor(Date.now() / 1000))
+  // eslint-disable-next-line react-hooks/purity
   const runStartMs = useRef(Date.now())
 
   // why-gate state
   const [picked, setPicked] = useState<StoryChoice | null>(null)
   const [whyText, setWhyText] = useState('')
+  const [whyTyping, setWhyTyping] = useState(false)
 
   // ending / debrief state
   const [phase, setPhase] = useState<'story' | 'ending' | 'debrief'>('story')
   const [debrief, setDebrief] = useState<Msg[]>([])
   const [debriefInput, setDebriefInput] = useState('')
+  const [debriefTyping, setDebriefTyping] = useState(false)
   const [sending, setSending] = useState(false)
+  const [speaking, setSpeaking] = useState(false)
+  // eslint-disable-next-line react-hooks/purity
   const sessionId = useRef(`cr-${story.id}-${Date.now()}`).current
 
   const node = byId.get(nodeId)!
@@ -51,7 +72,20 @@ export function CrossroadsPlayer({ story, gradeBand, childName, mentorName }: {
   const chosenIds = useMemo(() => new Set(whys.map(w => w.choiceId)), [whys])
   const echoes = (node.consequenceEchoes ?? []).filter(e => chosenIds.has(e.triggeredByChoiceId))
 
-  // prior runs → True Path reveal state + "last time you…" line
+  useEffect(() => mentorAudio.subscribe(setSpeaking), [])
+  useEffect(() => () => mentorAudio.stop(), [])
+
+  // Spoken narration — cached per node so replays don't re-bill TTS (spec §8).
+  useEffect(() => {
+    mentorAudio.stop()
+    const echoText = echoes.map(e => e.narrationInsert).join(' ')
+    void mentorAudio.speak(`${echoText} ${narration}`.trim(), mentorId, {
+      cacheKey: `cr-${story.id}-${nodeId}-${gradeBand}-${echoes.map(e => e.triggeredByChoiceId).join('.') || 'none'}`,
+    })
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [nodeId])
+
+  // prior runs → True Path reveal state
   useEffect(() => {
     fetch(`/api/crossroads/run?storyId=${story.id}`)
       .then(r => r.ok ? r.json() : { runs: [] })
@@ -70,13 +104,23 @@ export function CrossroadsPlayer({ story, gradeBand, childName, mentorName }: {
     setPath(p => [...p, nextId])
     setPicked(null)
     setWhyText('')
+    setWhyTyping(false)
     const next = byId.get(nextId)
     if (next?.type === 'ending') finishRun(nextId)
   }
 
-  function lockWhy() {
-    if (!picked || whyText.trim().length < 2) return
-    setWhys(w => [...w, { nodeId: node.id, choiceId: picked.id, choiceLabel: picked.label, why: whyText.trim() }])
+  // A choice highlights with weight: the mentor speaks its stakes aloud.
+  function highlight(c: StoryChoice) {
+    setPicked(c)
+    setWhyText('')
+    mentorAudio.stop()
+    void mentorAudio.speak(c.stakesLine, mentorId, { cacheKey: `cr-${story.id}-stakes-${c.id}` })
+  }
+
+  function lockWhy(said?: string) {
+    const why = (said ?? whyText).trim()
+    if (!picked || why.length < 2) return
+    setWhys(w => [...w, { nodeId: node.id, choiceId: picked.id, choiceLabel: picked.label, why }])
     advanceTo(picked.nextNodeId)
   }
 
@@ -102,29 +146,31 @@ export function CrossroadsPlayer({ story, gradeBand, childName, mentorName }: {
     setPicked(null); setWhyText('')
     setRunNumber(n => n + 1)
     setRewindCount(n => n + 1)
+    // event-handler timing reset — not render output
+    // eslint-disable-next-line react-hooks/purity
     runStartMs.current = Date.now()
     setPhase('story')
     setDebrief([])
   }
 
   // Debrief on the existing mentor engine (safety-screened, logged for parents)
-  async function startDebrief() {
+  function startDebrief() {
     setPhase('debrief')
-    setSending(true)
     const opener = story.noWin && priorRunCount === 0
       ? `You couldn't win that one. Nobody could. So what were you actually choosing between?`
       : priorRunCount > 0
       ? `You've walked this crossroads before and chose differently this time. What changed your mind?`
       : `Quite a journey. Before we talk about how it ended — which of your choices was the hardest to make, and why?`
     setDebrief([{ role: 'assistant', content: opener }])
-    setSending(false)
+    void mentorAudio.speak(opener, mentorId)
   }
 
-  async function sendDebrief() {
-    const text = debriefInput.trim()
+  async function sendDebrief(raw?: string) {
+    const text = (raw ?? debriefInput).trim()
     if (!text || sending) return
     const history: Msg[] = [...debrief, { role: 'user', content: text }]
     setDebrief(history); setDebriefInput(''); setSending(true)
+    let reply = 'Hmm, say that again?'
     try {
       const whyLines = whys.map(w => `chose "${w.choiceLabel}" because "${w.why}"`).join('; ')
       const res = await fetch('/api/mentor', {
@@ -153,152 +199,273 @@ export function CrossroadsPlayer({ story, gradeBand, childName, mentorName }: {
         }),
       })
       const data = await res.json()
-      setDebrief(h => [...h, { role: 'assistant', content: data.response ?? 'Tell me more about that.' }])
-    } catch {
-      setDebrief(h => [...h, { role: 'assistant', content: 'Hmm, say that again?' }])
-    } finally { setSending(false) }
+      if (data.response) reply = data.response
+    } catch { /* keep fallback */ }
+    setDebrief(h => [...h, { role: 'assistant', content: reply }])
+    setSending(false)
+    void mentorAudio.speak(reply, mentorId)
   }
 
+  const whyVoice = useVoiceInput((said) => lockWhy(said))
+  const debriefVoice = useVoiceInput((said) => { void sendDebrief(said) })
+  const mentor = getMentorCharacter(mentorId)
+
+  const micStateFor = (v: { listening: boolean }): MicState =>
+    speaking ? 'speaking' : sending ? 'thinking' : v.listening ? 'listening' : 'idle'
+
   const visitedDecisions = path.filter(id => byId.get(id)?.type === 'decision')
+  const beat = phase === 'debrief' ? 'conversation' : phase === 'ending' ? 'consequence' : picked ? 'decision' : 'story'
+  const atWhyGate = phase === 'story' && node.type === 'decision' && picked !== null
 
   // ───────────────────────── render ─────────────────────────
   return (
-    <div style={{ minHeight: '100vh', background: C.cream, color: C.navy, fontFamily: 'Inter, system-ui, sans-serif', paddingBottom: 60 }}>
-      {/* header */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '14px 18px', borderBottom: `1px solid ${C.border}`, background: '#fff' }}>
-        <button onClick={() => router.push('/home')} style={{ border: `1px solid ${C.border}`, background: '#fff', borderRadius: 999, padding: '7px 14px', fontSize: 13, cursor: 'pointer', color: C.navy }}>← Home</button>
-        <div>
-          <div style={{ fontFamily: 'IBM Plex Mono, monospace', fontSize: 10, letterSpacing: '.1em', textTransform: 'uppercase', color: C.teal }}>Crossroads · Era {story.era}{runNumber > 1 ? ` · Run ${runNumber}` : ''}</div>
-          <div style={{ fontFamily: 'Fraunces, Georgia, serif', fontWeight: 600, fontSize: 18 }}>{story.title}</div>
-        </div>
-      </div>
-
-      <div style={{ maxWidth: 640, margin: '0 auto', padding: '26px 18px' }}>
-
-        {/* ── STORY ── */}
-        {phase === 'story' && (
-          <>
-            <div style={{ background: '#fff', border: `1px solid ${C.border}`, borderRadius: 18, padding: 22, boxShadow: '0 1px 3px rgba(35,49,55,.06)' }}>
-              <div style={{ fontSize: 44, textAlign: 'center', marginBottom: 10 }}>{node.panelEmoji ?? '📜'}</div>
-              {echoes.map((e, i) => (
-                <p key={i} style={{ background: C.bubble, borderLeft: `3px solid ${C.teal}`, borderRadius: '0 10px 10px 0', padding: '10px 14px', fontSize: 14, fontStyle: 'italic', marginBottom: 12 }}>{e.narrationInsert}</p>
-              ))}
-              <p style={{ fontSize: 16.5, lineHeight: 1.65 }}>{narration}</p>
+    <EraAtmosphere era={(Math.min(Math.max(story.era, 1), 5)) as 1 | 2 | 3 | 4 | 5}>
+      <div className={`ck-beat ck-beat--${beat}`} style={{ minHeight: '100dvh', paddingBottom: 60, color: 'var(--color-charcoal)' }}>
+        {/* header */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '14px 18px' }}>
+          <button
+            onClick={() => { mentorAudio.stop(); router.push('/home') }}
+            className="ck-lift"
+            style={{ border: '2px solid var(--color-cream-border)', background: '#fff', borderRadius: 999, padding: '8px 16px', fontSize: 14, cursor: 'pointer', color: 'var(--color-charcoal)' }}
+          >
+            ← Map
+          </button>
+          <div>
+            <div style={{ fontSize: 11, letterSpacing: '.1em', textTransform: 'uppercase', color: 'var(--color-teal)', fontWeight: 600 }}>
+              Crossroads{runNumber > 1 ? ` · walk ${runNumber}` : ''}
             </div>
+            <div style={{ ...serif, fontWeight: 600, fontSize: 18 }}>{story.title}</div>
+          </div>
+        </div>
 
-            {node.type === 'scene' && (
-              <button onClick={() => advanceTo(node.nextNodeId!)} style={btnGold()}>Continue →</button>
-            )}
+        <div style={{ maxWidth: 640, margin: '0 auto', padding: '18px 18px 0' }}>
 
-            {node.type === 'decision' && (
-              <div style={{ marginTop: 18 }}>
-                <p style={{ fontFamily: 'IBM Plex Mono, monospace', fontSize: 11, letterSpacing: '.08em', textTransform: 'uppercase', color: C.teal, marginBottom: 10 }}>What would you do?</p>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-                  {(node.choices ?? []).map(c => (
-                    <button key={c.id} onClick={() => { setPicked(c); setWhyText('') }}
-                      style={{ textAlign: 'left', background: picked?.id === c.id ? C.teal : '#fff', color: picked?.id === c.id ? C.cream : C.navy, border: `2px solid ${picked?.id === c.id ? C.teal : C.border}`, borderRadius: 14, padding: '14px 16px', cursor: 'pointer' }}>
-                      <div style={{ fontWeight: 600, fontSize: 15.5 }}>{c.label}</div>
-                      <div style={{ fontSize: 13, opacity: .8, marginTop: 4, lineHeight: 1.45 }}>⚖️ {c.stakesLine}</div>
+          {/* ── STORY ── */}
+          {phase === 'story' && !atWhyGate && (
+            <div key={nodeId} className="ck-panel-enter">
+              <div className="ck-card">
+                <div style={{ fontSize: 52, textAlign: 'center', marginBottom: 10 }}>{node.panelEmoji ?? '📜'}</div>
+                {echoes.map((e, i) => (
+                  <p key={i} className="ck-echo" style={{ fontSize: 15, fontStyle: 'italic', lineHeight: 1.55, opacity: 0.85 }}>
+                    {e.narrationInsert}
+                  </p>
+                ))}
+                <p style={{ fontSize: 17, lineHeight: 1.65, margin: 0 }}>{narration}</p>
+              </div>
+
+              {node.type === 'scene' && (
+                <div style={{ marginTop: 16 }}>
+                  <ChildButton onClick={() => advanceTo(node.nextNodeId!)} style={{ width: '100%' }}>
+                    Continue →
+                  </ChildButton>
+                </div>
+              )}
+
+              {node.type === 'decision' && (
+                <div style={{ marginTop: 20 }}>
+                  <p style={{ ...serif, fontSize: 22, fontWeight: 600, textAlign: 'center', marginBottom: 14 }}>
+                    What would you do?
+                  </p>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+                    {(node.choices ?? []).map((c, i) => (
+                      <button
+                        key={c.id}
+                        className="ck-card ck-card-tap ck-lift ck-enter-slow"
+                        style={{ animationDelay: `${i * 450}ms`, border: '2px solid var(--color-cream-border)' }}
+                        onClick={() => highlight(c)}
+                      >
+                        <div style={{ ...serif, fontWeight: 600, fontSize: 18 }}>{c.label}</div>
+                        <div style={{ fontSize: 14.5, opacity: .75, marginTop: 6, lineHeight: 1.45 }}>⚖️ {c.stakesLine}</div>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {visitedDecisions.length > 0 && node.type !== 'ending' && (
+                <div style={{ marginTop: 22, fontSize: 13, opacity: .65 }}>
+                  ⏪ Rewind to: {visitedDecisions.map(id => (
+                    <button key={id} onClick={() => rewindTo(id)} style={{ border: '1px solid var(--color-cream-border)', background: '#fff', borderRadius: 999, padding: '4px 12px', margin: '0 4px', fontSize: 13, cursor: 'pointer', color: 'var(--color-teal)' }}>
+                      {byId.get(id)?.panelEmoji} choice
                     </button>
                   ))}
-                </div>
-
-                {/* WHY-GATE — the story does not advance without a reason */}
-                {picked && (
-                  <div style={{ marginTop: 14, background: '#fff', border: `2px solid ${C.gold}`, borderRadius: 14, padding: 16 }}>
-                    <div style={{ fontFamily: 'Fraunces, Georgia, serif', fontWeight: 600, fontSize: 16, marginBottom: 8 }}>{mentorName} leans in: “Why?”</div>
-                    <textarea value={whyText} onChange={e => setWhyText(e.target.value)} placeholder="Because…"
-                      style={{ width: '100%', minHeight: 64, border: `1px solid ${C.border}`, borderRadius: 10, padding: '10px 12px', fontFamily: 'Inter', fontSize: 14, resize: 'vertical', boxSizing: 'border-box' }} />
-                    <button onClick={lockWhy} disabled={whyText.trim().length < 2}
-                      style={{ ...btnGold(), marginTop: 10, opacity: whyText.trim().length < 2 ? .5 : 1 }}>
-                      That&apos;s my reason — continue →
-                    </button>
-                  </div>
-                )}
-              </div>
-            )}
-
-            {visitedDecisions.length > 0 && node.type !== 'ending' && (
-              <div style={{ marginTop: 22, fontSize: 12.5, opacity: .65 }}>
-                ⏪ Rewind to: {visitedDecisions.map(id => (
-                  <button key={id} onClick={() => rewindTo(id)} style={{ border: `1px solid ${C.border}`, background: '#fff', borderRadius: 999, padding: '3px 10px', margin: '0 4px', fontSize: 12, cursor: 'pointer', color: C.teal }}>
-                    {byId.get(id)?.panelEmoji} choice
-                  </button>
-                ))}
-              </div>
-            )}
-          </>
-        )}
-
-        {/* ── ENDING ── */}
-        {(phase === 'ending' || phase === 'debrief') && (
-          <>
-            <div style={{ background: '#fff', border: `1px solid ${C.border}`, borderRadius: 18, padding: 22, marginBottom: 16 }}>
-              <div style={{ fontSize: 44, textAlign: 'center', marginBottom: 10 }}>{node.panelEmoji}</div>
-              <p style={{ fontSize: 16.5, lineHeight: 1.65 }}>{narration}</p>
-              {node.endingSummary && (
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, marginTop: 14 }}>
-                  <div style={{ background: '#FBEDE7', borderRadius: 12, padding: '10px 14px', fontSize: 13 }}><b>What was lost:</b><br />{node.endingSummary.whatWasLost}</div>
-                  <div style={{ background: C.bubble, borderRadius: 12, padding: '10px 14px', fontSize: 13 }}><b>What was gained:</b><br />{node.endingSummary.whatWasGained}</div>
                 </div>
               )}
             </div>
+          )}
 
-            <PathMap story={story} path={path} byId={byId} trueRevealed={trueRevealed} />
-
-            {trueRevealed && (
-              <div style={{ background: '#fff', border: `2px solid ${C.teal}`, borderRadius: 14, padding: 16, margin: '16px 0', fontSize: 14, lineHeight: 1.6 }}>
-                <div style={{ fontFamily: 'IBM Plex Mono, monospace', fontSize: 10, letterSpacing: '.1em', textTransform: 'uppercase', color: C.teal, marginBottom: 6 }}>What really happened</div>
-                {story.whatReallyHappened}
+          {/* ── WHY-GATE — its own beat. The story waits for a reason. ── */}
+          {atWhyGate && picked && (
+            <div className="ck-panel-enter" style={{ display: 'flex', flexDirection: 'column', gap: 18, alignItems: 'center', paddingTop: 12 }}>
+              <div className="ck-card" style={{ width: '100%', textAlign: 'center', borderColor: 'var(--color-gold)' }}>
+                <div style={{ fontSize: 15, opacity: .7, marginBottom: 4 }}>You chose</div>
+                <div style={{ ...serif, fontWeight: 600, fontSize: 20 }}>{picked.label}</div>
               </div>
-            )}
 
-            {phase === 'ending' && (
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-                <button onClick={startDebrief} style={btnGold()}>Talk it over with {mentorName} →</button>
-                {visitedDecisions.map(id => (
-                  <button key={id} onClick={() => rewindTo(id)} style={{ border: `2px solid ${C.teal}`, background: '#fff', color: C.teal, borderRadius: 999, padding: '11px 18px', fontWeight: 600, fontSize: 14, cursor: 'pointer' }}>
-                    ⏪ Rewind to the {byId.get(id)?.panelEmoji} choice — repicking is what thinking looks like
-                  </button>
-                ))}
-              </div>
-            )}
+              <h2 className="ck-whygate-title">Tell me why.</h2>
 
-            {phase === 'debrief' && (
-              <div style={{ background: '#fff', border: `1px solid ${C.border}`, borderRadius: 18, padding: 16 }}>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 10, marginBottom: 12 }}>
-                  {debrief.map((m, i) => (
-                    <div key={i} style={{ maxWidth: '82%', padding: '10px 14px', borderRadius: 14, fontSize: 14, lineHeight: 1.5, alignSelf: m.role === 'assistant' ? 'flex-start' : 'flex-end', background: m.role === 'assistant' ? C.bubble : C.teal, color: m.role === 'assistant' ? C.navy : C.bubble }}>{m.content}</div>
-                  ))}
-                  {sending && <div style={{ fontSize: 12, opacity: .55 }}>{mentorName} is thinking…</div>}
+              {whyVoice.supported && !whyTyping && (
+                <>
+                  <MicButton
+                    state={micStateFor(whyVoice)}
+                    onPress={() => (whyVoice.listening ? whyVoice.stop() : whyVoice.start())}
+                  />
+                  {whyVoice.interim && (
+                    <p style={{ fontSize: 16, fontStyle: 'italic', opacity: .8, margin: 0 }}>{whyVoice.interim}…</p>
+                  )}
+                </>
+              )}
+
+              {(whyTyping || !whyVoice.supported) ? (
+                <div style={{ width: '100%', display: 'flex', flexDirection: 'column', gap: 10 }}>
+                  <textarea
+                    value={whyText}
+                    onChange={e => setWhyText(e.target.value)}
+                    placeholder="Because…"
+                    autoFocus
+                    style={{ width: '100%', minHeight: 72, border: '2px solid var(--color-cream-border)', borderRadius: 16, padding: '12px 14px', fontFamily: 'inherit', fontSize: 16, resize: 'vertical', boxSizing: 'border-box' }}
+                  />
+                  <ChildButton onClick={() => lockWhy()} disabled={whyText.trim().length < 2} style={{ width: '100%' }}>
+                    That&apos;s my reason — continue →
+                  </ChildButton>
                 </div>
-                <div style={{ display: 'flex', gap: 8 }}>
-                  <input value={debriefInput} onChange={e => setDebriefInput(e.target.value)} onKeyDown={e => e.key === 'Enter' && sendDebrief()} placeholder="Say what you think…"
-                    style={{ flex: 1, border: `1px solid ${C.border}`, borderRadius: 999, padding: '11px 16px', fontSize: 14, fontFamily: 'Inter' }} />
-                  <button onClick={sendDebrief} disabled={sending} style={{ background: C.teal, color: C.cream, border: 'none', borderRadius: 999, padding: '11px 20px', fontWeight: 600, cursor: 'pointer' }}>Send</button>
-                </div>
-                {debrief.filter(m => m.role === 'user').length >= 2 && (
-                  <button onClick={() => router.push('/home')} style={{ ...btnGold(), marginTop: 12 }}>Finish — back to my path →</button>
+              ) : (
+                <button
+                  type="button"
+                  onClick={() => setWhyTyping(true)}
+                  style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 14, color: 'var(--color-charcoal)', opacity: .55, padding: 8 }}
+                >
+                  ⌨️ type instead
+                </button>
+              )}
+
+              <button
+                type="button"
+                onClick={() => { setPicked(null); setWhyText(''); setWhyTyping(false) }}
+                style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 13, opacity: .5, padding: 6 }}
+              >
+                ← let me look at the choices again
+              </button>
+            </div>
+          )}
+
+          {/* ── ENDING ── */}
+          {(phase === 'ending' || phase === 'debrief') && (
+            <div className="ck-panel-enter">
+              <div className="ck-card" style={{ marginBottom: 16 }}>
+                <div style={{ fontSize: 52, textAlign: 'center', marginBottom: 10 }}>{node.panelEmoji}</div>
+                <p style={{ fontSize: 17, lineHeight: 1.65, marginTop: 0 }}>{narration}</p>
+                {node.endingSummary && (
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+                    <div style={{ background: '#FBEDE7', borderRadius: 14, padding: '12px 14px', fontSize: 14, lineHeight: 1.5 }}><b>What was lost</b><br />{node.endingSummary.whatWasLost}</div>
+                    <div style={{ background: 'var(--color-teal-tint, #E1F5EE)', borderRadius: 14, padding: '12px 14px', fontSize: 14, lineHeight: 1.5 }}><b>What was gained</b><br />{node.endingSummary.whatWasGained}</div>
+                  </div>
                 )}
               </div>
-            )}
-          </>
-        )}
+
+              {/* The Path Map — the post-story centerpiece */}
+              <PathMap story={story} path={path} byId={byId} trueRevealed={trueRevealed} onRewind={rewindTo} />
+
+              {trueRevealed && (
+                <div className="ck-card ck-enter-slow" style={{ borderColor: 'var(--color-teal)', margin: '16px 0' }}>
+                  <div style={{ fontSize: 11, letterSpacing: '.1em', textTransform: 'uppercase', color: 'var(--color-teal)', fontWeight: 600, marginBottom: 6 }}>What really happened</div>
+                  <p style={{ fontSize: 15, lineHeight: 1.6, margin: 0 }}>{story.whatReallyHappened}</p>
+                </div>
+              )}
+
+              {phase === 'ending' && (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 10, marginTop: 16 }}>
+                  <ChildButton onClick={startDebrief} style={{ width: '100%' }}>
+                    Talk it over with {mentorName} →
+                  </ChildButton>
+                  {visitedDecisions.map(id => (
+                    <ChildButton key={id} variant="secondary" onClick={() => rewindTo(id)} style={{ width: '100%' }}>
+                      ⏪ Rewind to the {byId.get(id)?.panelEmoji} choice
+                    </ChildButton>
+                  ))}
+                </div>
+              )}
+
+              {phase === 'debrief' && (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 14, marginTop: 16 }}>
+                  <div style={{ display: 'flex', justifyContent: 'center' }}>
+                    <MentorAvatar emoji={mentor.emoji} name={mentorName} state={speaking ? 'speaking' : sending ? 'thinking' : 'idle'} size="sm" />
+                  </div>
+                  <TranscriptColumn>
+                    {debrief.map((m, i) => (
+                      <TranscriptBubble
+                        key={i}
+                        role={m.role === 'assistant' ? 'mentor' : 'child'}
+                        who={m.role === 'assistant' ? mentorName : childName}
+                        entering={i === debrief.length - 1}
+                      >
+                        {m.content}
+                      </TranscriptBubble>
+                    ))}
+                    {debriefVoice.listening && debriefVoice.interim && (
+                      <TranscriptBubble role="child" who={childName}>{debriefVoice.interim}…</TranscriptBubble>
+                    )}
+                    {sending && (
+                      <TranscriptBubble role="mentor" who={mentorName}>
+                        <span className="ck-dots" aria-hidden><span className="ck-dot" /><span className="ck-dot" /><span className="ck-dot" /></span>
+                      </TranscriptBubble>
+                    )}
+                  </TranscriptColumn>
+
+                  <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 10 }}>
+                    {debriefVoice.supported && (
+                      <MicButton
+                        state={micStateFor(debriefVoice)}
+                        onPress={() => (debriefVoice.listening ? debriefVoice.stop() : debriefVoice.start())}
+                      />
+                    )}
+                    {(debriefTyping || !debriefVoice.supported) ? (
+                      <div style={{ display: 'flex', gap: 8, width: '100%' }}>
+                        <input
+                          value={debriefInput}
+                          onChange={e => setDebriefInput(e.target.value)}
+                          onKeyDown={e => e.key === 'Enter' && void sendDebrief()}
+                          placeholder="Say what you think…"
+                          autoFocus
+                          style={{ flex: 1, border: '2px solid var(--color-cream-border)', borderRadius: 999, padding: '12px 16px', fontSize: 16, fontFamily: 'inherit' }}
+                        />
+                        <ChildButton onClick={() => void sendDebrief()} disabled={sending || !debriefInput.trim()}>Send</ChildButton>
+                      </div>
+                    ) : (
+                      <button
+                        type="button"
+                        onClick={() => setDebriefTyping(true)}
+                        style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 14, opacity: .55, padding: 8 }}
+                      >
+                        ⌨️ type instead
+                      </button>
+                    )}
+                  </div>
+
+                  {debrief.filter(m => m.role === 'user').length >= 2 && (
+                    <ChildButton onClick={() => { mentorAudio.stop(); router.push('/home') }} style={{ width: '100%' }}>
+                      Finish — back to my path →
+                    </ChildButton>
+                  )}
+                </div>
+              )}
+            </div>
+          )}
+        </div>
       </div>
-    </div>
+    </EraAtmosphere>
   )
 }
 
-function btnGold(): React.CSSProperties {
-  return { display: 'block', width: '100%', marginTop: 16, background: '#E8A33D', color: '#412402', border: 'none', borderRadius: 999, padding: '14px 20px', fontWeight: 700, fontSize: 15.5, cursor: 'pointer', boxShadow: '0 5px 0 #c9852a' }
-}
-
-// ── Path Map: node columns by depth; child's route gold, True Path teal ──────
-function PathMap({ story, path, byId, trueRevealed }: {
+// ── Path Map: the child's route draws in gold; unexplored silhouettes shimmer
+//    ("want to see?"); the True Path threads through in teal once revealed.
+//    Also rendered by the Curiosity Journal as a fold-out page. ──
+export function PathMap({ story, path, byId, trueRevealed, onRewind }: {
   story: CrossroadsStory
   path: string[]
   byId: Map<string, StoryNode>
   trueRevealed: boolean
+  onRewind: (decisionNodeId: string) => void
 }) {
   // BFS depth layout
   const depth = new Map<string, number>([[story.startNodeId, 0]])
@@ -329,30 +496,75 @@ function PathMap({ story, path, byId, trueRevealed }: {
     })
   }
 
+  // The child's route as one polyline, so it can draw in end-to-end.
+  const runPoints = path
+    .map(id => pos.get(id))
+    .filter((p): p is { x: number; y: number } => !!p)
+    .map(p => `${p.x},${p.y}`)
+    .join(' ')
+
+  const hasUnexplored = [...pos.keys()].some(id => !onPath.has(id) && !(trueRevealed && trueSet.has(id)))
+
   return (
-    <div style={{ background: '#fff', border: '1px solid #E3DCC8', borderRadius: 18, padding: 16 }}>
-      <div style={{ fontFamily: 'IBM Plex Mono, monospace', fontSize: 10, letterSpacing: '.1em', textTransform: 'uppercase', color: '#1B6E6B', marginBottom: 8 }}>Your path map</div>
+    <div className="ck-card ck-enter">
+      <div style={{ fontFamily: 'var(--font-serif, Fraunces, Georgia, serif)', fontWeight: 600, fontSize: 20, marginBottom: 4 }}>
+        Your path
+      </div>
       <svg viewBox={`0 0 ${W} ${H}`} style={{ width: '100%', height: 'auto' }}>
+        {/* silhouette web first, so the gold route draws over it */}
         {edges.map((e, i) => {
           const A = pos.get(e.a)!, B = pos.get(e.b)!
-          const stroke = e.onRun ? '#E8A33D' : trueRevealed && e.onTrue ? '#1B6E6B' : '#E3DCC8'
-          return <line key={i} x1={A.x} y1={A.y} x2={B.x} y2={B.y} stroke={stroke} strokeWidth={e.onRun ? 4 : 2.5} strokeDasharray={trueRevealed && e.onTrue && !e.onRun ? '4 5' : undefined} />
+          if (e.onRun) return null
+          const isTrue = trueRevealed && e.onTrue
+          return (
+            <line
+              key={i}
+              className={isTrue ? undefined : 'ck-pathmap-tempt'}
+              x1={A.x} y1={A.y} x2={B.x} y2={B.y}
+              stroke={isTrue ? 'var(--color-teal, #1B6E6B)' : '#B9B2A0'}
+              strokeWidth={isTrue ? 3 : 2.5}
+              strokeDasharray={isTrue ? '4 5' : undefined}
+            />
+          )
         })}
+        {/* the child's route — gold, animated draw-in */}
+        {runPoints && (
+          <polyline
+            className="ck-pathmap-run"
+            points={runPoints}
+            fill="none"
+            stroke="var(--color-gold, #E8A33D)"
+            strokeWidth={4.5}
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          />
+        )}
         {[...pos.entries()].map(([id, p]) => {
           const n = byId.get(id)!
-          const fill = onPath.has(id) ? '#E8A33D' : trueRevealed && trueSet.has(id) ? '#1B6E6B' : '#fff'
-          return (
-            <g key={id}>
-              <circle cx={p.x} cy={p.y} r={n.type === 'decision' ? 15 : 11} fill={fill} stroke="#233137" strokeWidth={1.5} opacity={onPath.has(id) || (trueRevealed && trueSet.has(id)) ? 1 : 0.45} />
+          const visited = onPath.has(id)
+          const isTrue = trueRevealed && trueSet.has(id)
+          const fill = visited ? 'var(--color-gold, #E8A33D)' : isTrue ? 'var(--color-teal, #1B6E6B)' : '#fff'
+          const g = (
+            <g key={id} className={!visited && !isTrue ? 'ck-pathmap-tempt' : undefined}>
+              <circle cx={p.x} cy={p.y} r={n.type === 'decision' ? 15 : 11} fill={fill} stroke="var(--color-charcoal, #233137)" strokeWidth={1.5} opacity={visited || isTrue ? 1 : 0.5} />
               <text x={p.x} y={p.y + 4} textAnchor="middle" fontSize={11}>{n.panelEmoji ?? ''}</text>
             </g>
           )
+          // visited decisions on the map are tappable — rewind from here
+          if (visited && n.type === 'decision') {
+            return (
+              <g key={id} onClick={() => onRewind(id)} style={{ cursor: 'pointer' }} role="button" aria-label="Rewind to this choice">
+                {g}
+              </g>
+            )
+          }
+          return g
         })}
       </svg>
-      <div style={{ display: 'flex', gap: 16, fontSize: 11, opacity: .7, marginTop: 6 }}>
-        <span>● gold — your route</span>
-        {trueRevealed && <span style={{ color: '#1B6E6B' }}>● teal — what really happened</span>}
-        <span>○ grey — unexplored</span>
+      <div style={{ display: 'flex', gap: 16, fontSize: 12.5, opacity: .75, marginTop: 6, flexWrap: 'wrap' }}>
+        <span style={{ color: 'var(--color-gold, #B57A17)' }}>— the way you went</span>
+        {trueRevealed && <span style={{ color: 'var(--color-teal, #1B6E6B)' }}>┅ what really happened</span>}
+        {hasUnexplored && <span>○ paths you haven&apos;t walked… want to see?</span>}
       </div>
     </div>
   )

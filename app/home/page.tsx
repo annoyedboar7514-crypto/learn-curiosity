@@ -4,16 +4,7 @@ import { redirect } from "next/navigation";
 import { auth } from "@clerk/nextjs/server";
 import { getChildProfile } from "@/lib/session";
 import { getProgress } from "@/lib/db/progress";
-import HomeClient from "@/app/home/HomeClient";
-
-const ARCHETYPE_EMOJI: Record<string, string> = {
-  "explorer":         "🧭",
-  "astronaut":        "🚀",
-  "detective":        "🔍",
-  "inventor-builder": "🔧",
-  "artist":           "🎨",
-  "doctor-healer":    "🩺",
-};
+import StoryMapClient from "@/app/home/StoryMapClient";
 
 export default async function HomePage() {
   let userId: string | null = null;
@@ -25,7 +16,6 @@ export default async function HomePage() {
   // No profile yet — new user hasn't completed the onboarding form
   if (!profile) redirect("/signup/complete");
 
-  const archKey   = profile.archetype ?? "explorer";
   const gradeBand = (["K-2", "3-4", "5-6"].includes(profile?.gradeBand ?? "")
     ? profile!.gradeBand
     : "K-2") as "K-2" | "3-4" | "5-6";
@@ -48,11 +38,11 @@ export default async function HomePage() {
     : 1;
 
   return (
-    <HomeClient profile={{
+    <StoryMapClient profile={{
       nickname:        profile.nickname,
       gradeBand,
-      archetype:       archKey,
-      archetypeEmoji:  ARCHETYPE_EMOJI[archKey] ?? "🧭",
+      archetype:       profile.archetype ?? "explorer",
+      mentorId:        profile.mentorId ?? "luna",
       completedLevels,
       currentLevelId,
       quizPending:     !profile.archetype,

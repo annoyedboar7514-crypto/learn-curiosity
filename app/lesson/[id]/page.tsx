@@ -49,6 +49,7 @@ export default async function LessonByIdPage({
       lesson={lesson}
       gradeBand={gradeBand}
       childName={childName}
+      mentorId={mentorId}
       mentorName={mentorName}
       archetype={archetype}
     />

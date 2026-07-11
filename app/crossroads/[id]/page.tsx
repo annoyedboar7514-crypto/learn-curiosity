@@ -32,9 +32,10 @@ export default async function CrossroadsPage({
   // Age-band gate: a child outside the band never plays the story.
   if (!story.ageBands.includes(gradeBand)) redirect("/home");
 
+  const mentorId = profile?.mentorId ?? "luna";
   let mentorName = "Luna";
   try {
-    mentorName = getMentorCharacter(profile?.mentorId ?? "luna")?.name ?? "Luna";
+    mentorName = getMentorCharacter(mentorId)?.name ?? "Luna";
   } catch { /* default */ }
 
   return (
@@ -42,6 +43,7 @@ export default async function CrossroadsPage({
       story={story}
       gradeBand={gradeBand}
       childName={profile?.nickname ?? "Explorer"}
+      mentorId={mentorId}
       mentorName={mentorName}
     />
   );

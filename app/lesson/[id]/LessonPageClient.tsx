@@ -7,11 +7,12 @@ interface Props {
   lesson: Partial<Lesson>
   gradeBand: GradeBand
   childName: string
+  mentorId: string
   mentorName: string
   archetype: string
 }
 
-export function LessonPageClient({ lesson, gradeBand, childName, mentorName, archetype }: Props) {
+export function LessonPageClient({ lesson, gradeBand, childName, mentorId, mentorName, archetype }: Props) {
   const router = useRouter()
 
   const handleComplete = (data: SessionComplete) => {
@@ -39,6 +40,7 @@ export function LessonPageClient({ lesson, gradeBand, childName, mentorName, arc
       lesson={lesson}
       gradeBand={gradeBand}
       childName={childName}
+      mentorId={mentorId}
       mentorName={mentorName}
       archetype={archetype}
       onComplete={handleComplete}

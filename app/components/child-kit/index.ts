@@ -10,3 +10,5 @@ export { ChildCard, type ChildCardProps } from "./ChildCard";
 export { CelebrateQuiet, type CelebrateQuietProps } from "./CelebrateQuiet";
 export { EraAtmosphere, type EraAtmosphereProps } from "./EraAtmosphere";
 export { soundEnabled, setSoundEnabled, playPageTurn, playPop, playMicWarm } from "./sounds";
+export { mentorAudio } from "./audio";
+export { useVoiceInput } from "./useVoiceInput";
